@@ -35,6 +35,9 @@
 	          	  <li class="nav-item">
                       <a class="nav-link" href="{% url 'logout-user' %}">Logout</a>
                   </li>
+                  <li class="nav-item">
+                      <a class="nav-link" href="#">Profile</a>
+                  </li>
 
 	          {% else %}
 		          <li class="nav-item">
@@ -49,15 +52,15 @@
 
 		       {% endif %}
           </div>
-{#        <li class="nav-item">#}
-{#          <a class="nav-link" href="{% url 'about-us' %}">About</a>#}
-{#        </li>#}
-{#        <li class="nav-item">#}
-{#          <a class="nav-link" href="{% url 'contact-us' %}">Contact</a>#}
-{#        </li>#}
-{#          <li class="nav-item">#}
-{#          <a class="nav-link" href="{% url 'contact-us' %}">Feedback</a>#}
-{#        </li>#}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'about-us' %}">About</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'contact-us' %}">Contact</a>
+        </li>
+          <li class="nav-item">
+          <a class="nav-link" href="{% url 'give-feedback' %}">Feedback</a>
+        </li>
 
 
 

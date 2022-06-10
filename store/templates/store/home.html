@@ -1,4 +1,6 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 {% block title %} Home {% endblock %}
-{% block content %} Home {% endblock %}
+{% block content %} Home
+    {% include "store/messages.html" %}
+{% endblock %}

@@ -4,13 +4,29 @@
 {% block content %}
 
 	<h2>Login Page</h2>
+
+    {% include "store/messages.html" %}
 	<div class="content-section">
 		<form method="POST">
 			{% csrf_token %}
 			<fieldset class="form-group">
 				<legend class="border-bottom mb-4">
 					Log In
-					{{ form|crispy }}
+
+                    <div>
+{#                        {{ form|crispy }}#}
+                        {% for field in form %}
+                            <div>
+                            <label>{{ field.label }}</label>
+                            {{ field }}
+
+                            </div>
+                            <br>
+
+                        {% endfor %}
+                    </div>
+
+
 				</legend>
 			</fieldset>
 			<div class="form-group">
