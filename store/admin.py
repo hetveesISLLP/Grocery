@@ -19,8 +19,10 @@ class brand_modify(admin.ModelAdmin):
 
     def get_queryset(self, request):
         if request.user.is_staff and not request.user.is_superuser:
+            Brand.user = request.user
             return Brand.objects.filter(user=request.user)
         else:
+            Brand.user = request.user
             return super().get_queryset(request)
 
 
@@ -32,8 +34,10 @@ class product_modify(admin.ModelAdmin):
 
     def get_queryset(self, request):
         if request.user.is_staff and not request.user.is_superuser:
+            Product.brand = request.user.brand
             return Product.objects.filter(brand=request.user.brand)
         else:
+            Product.brand = request.user.brand
             return super().get_queryset(request)
 
 
