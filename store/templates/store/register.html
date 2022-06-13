@@ -1,59 +1,37 @@
 {% extends "store/base.html" %}
-
-{% load static %}
 {% load crispy_forms_tags %}
-{% block title %} Register {% endblock %}
-
-{% block css %}
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="{% static 'register.css' %}">
-{% endblock %}
-
+{% block title %} Registration {% endblock %}
 {% block content %}
-    {#    {% include "store/messages.html" %}#}
-    <div class="content-section">
-        <form method="POST">
-            {% csrf_token %}
-            <fieldset class="form-group">
-                <legend class="border-bottom mb-4">
-                    Register
-                    <div>
 
-                        {#  {{ form|crispy }}#}
-                        {% for field in u_form %}
+<h2>Sign up</h2>
+ <form method="post">
+    {% csrf_token %}
+    {% for field in c_form %}
+      <p>
+        {{ field.label_tag }}<br>
+        {{ field }}
+        {% if field.help_text %}
+          <small style="color: grey">{{ field.help_text }}</small>
+        {% endif %}
+        {% for error in field.errors %}
+          <p style="color: red">{{ error }}</p>
+        {% endfor %}
+      </p>
+    {% endfor %}
 
-                            {{ field.label }}
-                            {{ field }}
-                            <br>
-{#                            {% if field.help_text %}#}
-{#                              <small style="color: grey">{{ field.help_text }}</small>#}
-{#                            {% endif %}#}
-{#                            {% for error in field.errors %}#}
-{#                              <p style="color: red">{{ error }}</p>#}
-{#                            {% endfor %}#}
+    {% for field in u_form %}
+      <p>
+        {{ field.label_tag }}<br>
+        {{ field }}
+        {% if field.help_text %}
+          <small style="color: grey">{{ field.help_text }}</small>
+        {% endif %}
+        {% for error in field.errors %}
+          <p style="color: red">{{ error }}</p>
+        {% endfor %}
+      </p>
+    {% endfor %}
+    <button type="submit">Sign up</button>
+  </form>
 
-                        {% endfor %}
-
-                        {% for field in c_form %}
-                            {{ field.label }}
-                            {{ field }}
-                            <br>
-{#                            {% if field.help_text %}#}
-{#                              <small style="color: grey">{{ field.help_text }}</small>#}
-{#                            {% endif %}#}
-{#                            {% for error in field.errors %}#}
-{#                              <p style="color: red">{{ error }}</p>#}
-{#                            {% endfor %}#}
-                        {% endfor %}
-
-                        <button type="submit">Sign up</button>
-                    </div>
-                </legend>
-            </fieldset>
-
-
-        </form>
-    </div>
 {% endblock %}
