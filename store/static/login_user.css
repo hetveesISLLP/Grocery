@@ -10,37 +10,15 @@ body{
 }
 .background{
     width: 330px;
-    height: 320px;
+    height: 420px;
     position: absolute;
     transform: translate(-50%,-50%);
     left: 50%;
     top: 50%;
 }
-.background .shape{
-    height: 100px;
-    width: 100px;
-    position: absolute;
-    border-radius: 100%;
-}
-.shape:first-child{
-    background: linear-gradient(
-        #1845ad,
-        #23a2f6
-    );
-    left: -100px;
-    top: -80px;
-}
-.shape:last-child{
-    background: linear-gradient(
-        to right,
-        #ff512f,
-        #f09819
-    );
-    right: -100px;
-    bottom: -80px;
-}
+
 form{
-    height: 420px;
+    height: 520px;
     width: 400px;
     background-color: rgba(255,255,255,0.13);
     position: absolute;
@@ -87,7 +65,7 @@ input{
 ::placeholder{
     color: #e5e5e5;
 }
-button{
+button {
     margin-top: 50px;
     width: 100%;
     background-color: #ffffff;
@@ -98,6 +76,19 @@ button{
     border-radius: 5px;
     cursor: pointer;
 }
+
+.link {
+    margin-top: 10px;
+    width: 100%;
+    color: #ffffff;
+    padding: 15px 0;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+}
+
 
 button:hover{
     color:blue;

@@ -2,7 +2,7 @@
 
 {% load static %}
 {% load crispy_forms_tags %}
-{% block title %} Register {% endblock %}
+{% block title %} Login {% endblock %}
 
 {% block css %}
     <link rel="preconnect" href="https://fonts.gstatic.com">
@@ -17,12 +17,8 @@
 		<form method="POST">
 			{% csrf_token %}
             <fieldset class="form-group">
+                Login
                 <legend class="border-bottom mb-4">
-                    Register
-{#                    <div class="background">#}
-{#                        <div class="shape"></div>#}
-{#                        <div class="shape"></div>#}
-{#                    </div>#}
                     <div>
                         <label for ="username">Username</label>
                         <input type="text" id="username" name="username">
@@ -30,6 +26,9 @@
                         <input type="text" id="password" name="password">
 
                         <button type="submit">Login</button>
+                        <div class="link">
+                            <a href={% url 'password_reset' %}>Forgot Password</a>
+                        </div>
                     </div>
                 </legend>
             </fieldset>
