@@ -12,6 +12,26 @@ from django.views.generic import TemplateView
 from django.views.generic import DetailView
 from django.views.generic.edit import UpdateView
 from . models import Customer
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib import messages
+
+
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Important!
+            messages.success(request, 'Your password was successfully updated!')
+            return redirect('change_password')
+        else:
+            messages.error(request, 'Please correct the error below.')
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'store/change_password.html', {
+        'form': form
+    })
 
 
 def profile(request):
@@ -77,7 +97,7 @@ def loginPage(request):
             user = User.objects.get(username=username)
         except:
             messages.error(request, 'User Does Not Exist !')
-            return redirect('login-user')
+            return redirect('login')
 
         user = authenticate(request, username=username, password=password)
         if user is not None:
@@ -85,11 +105,11 @@ def loginPage(request):
             return redirect('grocery_store_home')
         else:
             messages.error(request, 'Invalid Username or password!')
-            return redirect('login-user')
+            return redirect('login')
 
 
     context = {}
-    return render(request, 'store/login_user.html', context)
+    return render(request, 'store/login.html', context)
 
 
 def registerbrand(request):
@@ -151,7 +171,7 @@ def register(request):
             c_user.save()
 
             messages.success(request, "Successfully created account")
-            return redirect('login-user')
+            return redirect('login')
 
         else:
             messages.error(request, "Registration failed.")
