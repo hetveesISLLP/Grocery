@@ -17,7 +17,7 @@ class Customer(models.Model):
     email = models.EmailField(max_length=50, unique=True)
     mobile_no = models.CharField(max_length=10, unique=True)
     # mobile_no = PhoneNumberField(null=True, unique=True)
-    image = models.ImageField(default='default.jpeg', upload_to='profile_pics')
+    # image = models.ImageField(default='default.jpeg', upload_to='profile_pics')
 
 
 class Brand(models.Model):
