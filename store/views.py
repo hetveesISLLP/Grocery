@@ -83,7 +83,7 @@ class FeedbackView(TemplateView):
 
 
 class HomeView(ListView):
-    template_name = 'store/base.html'
+    template_name = 'store/home.html'
     model = User
     context_object_name = 'users'
 
@@ -174,10 +174,11 @@ def register(request):
             return redirect('login')
 
         else:
-            messages.error(request, "Registration failed.")
-            return HttpResponse("Registration Failed.")
+            messages.error(request, 'Invalid data. Please try again.')
+            return redirect('register-user')
+            # return HttpResponse("Registration Failed.")
     else:
-        messages.error(request, "Invalid Request.")
+        # messages.error(request, "Invalid Request.")
         return render(request, 'store/register.html', {'c_form': c_form, 'u_form': u_form})
 
 

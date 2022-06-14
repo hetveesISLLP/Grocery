@@ -9,21 +9,50 @@ body{
     background-color: #080710;
 }
 .background{
-    width: 530px;
+    width: 330px;
     height: 320px;
     position: absolute;
     transform: translate(-50%,-50%);
     left: 50%;
     top: 50%;
 }
+.background .shape{
+    height: 100px;
+    width: 100px;
+    position: absolute;
+    border-radius: 100%;
+}
+.shape:first-child{
+    background: linear-gradient(
+        #1845ad,
+        #23a2f6
+    );
+    left: -100px;
+    top: -80px;
+}
+.shape:last-child{
+    background: linear-gradient(
+        to right,
+        #ff512f,
+        #f09819
+    );
+    right: -100px;
+    bottom: -80px;
+}
+.link {
+    margin-top: 20px;
+    font-size: 20px;
+    color: white;
+    text-align: center;
+}
 
 form{
-    height: 1600px;
-    width: 1000px;
+    height: 580px;
+    width: 400px;
     background-color: rgba(255,255,255,0.13);
     position: absolute;
     transform: translate(-50%,-50%);
-    top: 160%;
+    top: 64%;
     left: 50%;
     border-radius: 10px;
     /*backdrop-filter: blur(10px);*/
@@ -51,7 +80,7 @@ label{
     font-size: 16px;
     font-weight: 500;
 }
-input, select{
+input{
     display: block;
     height: 50px;
     width: 100%;
@@ -61,10 +90,6 @@ input, select{
     margin-top: 8px;
     font-size: 14px;
     font-weight: 300;
-}
-
-option {
-    background-color: #080710;
 }
 ::placeholder{
     color: #e5e5e5;

@@ -17,8 +17,15 @@
         <form method="POST">
             {% csrf_token %}
             <fieldset class="form-group">
+            Registration
+            {% for message in messages %}
+                <div class="alert alert-danger">
+                    <a class="close" href="#" data-dismiss="alert"></a>
+                       {{ message }}
+                </div>
+            {% endfor %}
+
                 <legend class="border-bottom mb-4">
-                    Register
                     <div>
 
                         {#  {{ form|crispy }}#}
@@ -27,12 +34,12 @@
                             {{ field.label }}
                             {{ field }}
                             <br>
-{#                            {% if field.help_text %}#}
-{#                              <small style="color: grey">{{ field.help_text }}</small>#}
-{#                            {% endif %}#}
-{#                            {% for error in field.errors %}#}
-{#                              <p style="color: red">{{ error }}</p>#}
-{#                            {% endfor %}#}
+                            {% if field.help_text %}
+                              <small style="color: grey">{{ field.help_text }}</small><br><br>
+                            {% endif %}
+                            {% for error in field.errors %}
+                              <p style="color: red">{{ error }}</p>
+                            {% endfor %}
 
                         {% endfor %}
 
@@ -40,12 +47,13 @@
                             {{ field.label }}
                             {{ field }}
                             <br>
-{#                            {% if field.help_text %}#}
-{#                              <small style="color: grey">{{ field.help_text }}</small>#}
-{#                            {% endif %}#}
-{#                            {% for error in field.errors %}#}
-{#                              <p style="color: red">{{ error }}</p>#}
-{#                            {% endfor %}#}
+                            {% if field.help_text %}
+                              <small style="color: grey">{{ field.help_text }}</small><br><br>
+                            {% endif %}
+
+                            {% for error in field.errors %}
+                              <p style="color: red">{{ error }}</p>
+                            {% endfor %}
                         {% endfor %}
 
                         <button type="submit">Sign up</button>
