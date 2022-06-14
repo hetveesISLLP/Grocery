@@ -12,25 +12,32 @@
 {% endblock %}
 
 {% block content %}
+{#    {% for message in messages %}#}
+{#                <div class="alert alert-danger">#}
+{#                    <a class="close" href="#" data-dismiss="alert"></a>#}
+{#                       {{ message }}#}
+{#                </div>#}
+{#            {% endfor %}#}
     {#    {% include "store/messages.html" %}#}
-    {% if messages %}
-{#        {% for message in messages %}#}
-{#            <div class="alert alert-danger">#}
-{#                <a class="close" href="#" data-dismiss="alert"></a>#}
-{#                   {{ message }}#}
-{#            </div>#}
-{#        {% endfor %}#}
-    {% endif %}
     <div class="content-section">
         <form method="POST">
             {% csrf_token %}
             <fieldset class="form-group">
             Registration
+
+
                 <legend class="border-bottom mb-4">
                     <div>
 
                         {#  {{ form|crispy }}#}
                         {% for field in u_form %}
+
+{#                            {{ field.label }}#}
+{#                            {{ field }}#}
+                            <br>
+                            {% if field.help_text %}
+                              <small style="color: grey">{{ field.help_text }}</small><br><br>
+                            {% endif %}
                             <p>{{ field.errors }}</p>
                             {{ field.label }}
                             {% if field.errors %}
@@ -43,14 +50,6 @@
                             {% else %}
                                 {{ field }}
                             {% endif %}
-{#                            {{ field }}#}
-                            <br>
-{#                            {% if field.help_text %}#}
-{#                              <small style="color: grey">{{ field.help_text }}</small><br><br>#}
-{#                            {% endif %}#}
-{#                            {% for error in field.errors %}#}
-{#                              <p style="color: red">{{ error }}</p>#}
-{#                            {% endfor %}#}
 
                         {% endfor %}
 
@@ -72,7 +71,7 @@
                 <br>
                 <br>
                 <div class="link">
-                <a href={% url 'register-brand' %}>Register as Brand</a>
+                <a href={% url 'register-user' %}>Register as User</a>
             </div>
                 </legend>
             </fieldset>

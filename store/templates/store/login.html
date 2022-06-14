@@ -9,34 +9,26 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{% static 'store/login.css' %}">
-
-
 {% endblock %}
 
 {% block content %}
+    {% for message in messages %}#}
+        <div class="alert alert-danger">
+            <a class="close" href="#" data-dismiss="alert"></a>
+            {{ message }}
+        </div>
+    {% endfor %}
 
 
-
-{#    {% include "store/messages.html" %}#}
+    {#    {% include "store/messages.html" %}#}
     <div class="content-section">
-		<form method="POST">
-			{% csrf_token %}
+        <form method="POST">
+            {% csrf_token %}
             <fieldset class="form-group">
                 Login
-                {% for message in messages %}
-
-                    <div class="alert alert-danger">
-                        <a class="close" href="#" data-dismiss="alert"></a>
-                           {{ message }}
-                    </div>
-                {% endfor %}
                 <legend class="border-bottom mb-4">
                     <div>
-                        <label for ="username">Username</label>
-                        <input type="text" id="username" name="username">
-                        <label for ="password">Password</label>
-                        <input type="text" id="password" name="password">
-
+                        {{ form }}
                         <button type="submit">Login</button>
 
                         <div class="link">

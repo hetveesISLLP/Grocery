@@ -35,6 +35,10 @@ class product_modify(admin.ModelAdmin):
     def get_queryset(self, request):
         if request.user.is_staff and not request.user.is_superuser:
             Product.brand = request.user.brand
+            # print(request.user.brand)
+            # print(request.user.brand.id)
+            # print(Product.brand)
+
             return Product.objects.filter(brand=request.user.brand)
         else:
             Product.brand = request.user.brand

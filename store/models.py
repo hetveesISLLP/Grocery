@@ -11,10 +11,10 @@ gender_choices = (
 
 class Customer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    username = models.CharField(max_length=20, unique=True)
+    # username = models.CharField(max_length=20, unique=True)
     age = models.IntegerField()
     gender = models.CharField(max_length=10, choices=gender_choices, default='Female')
-    email = models.EmailField(max_length=50, unique=True)
+    # email = models.EmailField(max_length=50, unique=True)
     mobile_no = models.CharField(max_length=10, unique=True)
     # mobile_no = PhoneNumberField(null=True, unique=True)
     # image = models.ImageField(default='default.jpeg', upload_to='profile_pics')
@@ -22,13 +22,18 @@ class Customer(models.Model):
 
 class Brand(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    email = models.EmailField(max_length=50, unique=True)
+    # email = models.EmailField(max_length=50, unique=True)
     brand = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.brand
 
 
 class Category(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
+    def __str__(self):
+        return self.name
 
 volume_choices = (
     ("gm", "gm"),
@@ -46,11 +51,14 @@ class Product(models.Model):
     name = models.CharField(max_length=50)
     price = models.FloatField()
     image = models.ImageField()
+    # todo : default = 0
     discount = models.IntegerField()
     description = models.TextField(max_length=500)
+    # todo : default = 0
     no_of_purchases = models.IntegerField()
     volume = models.FloatField()
     volume_unit = models.CharField(max_length=10, choices=volume_choices, default="gm")
+
 
 
 class Favourites(models.Model):
@@ -72,6 +80,7 @@ class Review(models.Model):
 
 class Cart(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    # many-to-many
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
 
@@ -86,6 +95,8 @@ payment_choices = (
 
 class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    #todo : product, quantity
+    #check for Invoice. No need
     address = models.TextField(max_length=200)
     datetime = models.DateTimeField(auto_now_add=True)
     payment_method = models.CharField(max_length=30, choices=payment_choices, default='Cash On Delivery')

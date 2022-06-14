@@ -24,6 +24,11 @@
                         <p>{{ field }}</p></label>
                         <br>
                     {% endfor %}
+                    {% for field in customer_form %}
+                        <label>{{ field.label }}
+                        <p>{{ field }}</p></label>
+                        <br>
+                    {% endfor %}
                 </div>
               </div>
             </div>
