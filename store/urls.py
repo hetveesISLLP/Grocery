@@ -1,7 +1,9 @@
-from . views import HomeView, register, registerbrand, FeedbackView, change_password, AboutView, profile
-from django.urls import path, include
+from . views import register, registerbrand, FeedbackView, ChangePasswordView, AboutView, profile
+from django.urls import path
+from product.views import HomeView
 from django.contrib.auth import views as auth_views
-from django.contrib import admin
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('', HomeView.as_view(), name="grocery_store_home"),
@@ -12,7 +14,6 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='store/login.html'), name='login'),
     path('home/', HomeView.as_view(), name="grocery_store_home"),
     path('logout/', auth_views.LogoutView.as_view(template_name='store/logout.html'), name='logout-user'),
-    # path('admin/', admin.site.urls, name='admin:index'),
     path('profile/', profile, name='user-profile'),
     path('password_reset/',
          auth_views.PasswordResetView.as_view(template_name='store/password_reset.html'),
@@ -26,6 +27,11 @@ urlpatterns = [
     path('password-reset-complete/',
          auth_views.PasswordResetCompleteView.as_view(template_name='store/password_reset_complete.html'),
          name='password_reset_complete'),
-    path('changepassword/', change_password, name='change_password'),
+    path('change_password/', ChangePasswordView.as_view(), name='change_password'),
+
 
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

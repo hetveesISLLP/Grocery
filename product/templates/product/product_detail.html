@@ -1,0 +1,51 @@
+{% extends "product/base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block title %} Home {% endblock %}
+
+{% block css %}
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{% static 'product/description.css' %}">
+{% endblock %}
+
+{% block content %}
+    <section style="background-color: #eee;">
+        <div class="container py-5">
+            <div class="row">
+                <div class="col-md-6">
+                    <img src="{{ product.image.url }}">
+                </div>
+
+                <div class="col-md-8 col-lg-4 mb-4 mb-lg-0">
+                    <div class="card mb-4">
+                        <div class="d-flex justify-content-between p-12">
+                        </div>
+                        <div class="card-body">
+                            <p>Name : {{ product.name }}</p>
+                            <p>Brand : {{ product.brand }}</p>
+                            <p>Category : {{ product.category }}</p>
+                            <p>Price : {{ product.price }}</p>
+                            <p>Volume : {{ product.volume }} {{ product.volume_unit }}</p>
+                            <p>Description : {{ product.description }}</p>
+                            <p>Discount : {{ product.discount }}</p>
+                            <p>Quantity : {{ product.available_quantity }}</p>
+                            <p>Volume : {{ product.volume }}</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-success">Buy Now</button>
+                    <button type="button" class="btn btn-primary">Add to cart</button>
+                    <button type="button" class="btn btn-outline-danger">Add to WishList</button>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+
+
+
+{% endblock %}
+

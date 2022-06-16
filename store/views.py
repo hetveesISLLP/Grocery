@@ -1,3 +1,4 @@
+import django.contrib.messages
 from django.shortcuts import render, HttpResponse
 from django.contrib.auth import authenticate, login
 from .forms import RegistrationForm, CustomerRegister, BrandRegister, ProfileUpdateForm, ProfileUpdateFormUser
@@ -12,51 +13,61 @@ from .models import Customer
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin,UserPassesTestMixin
+from django.urls import reverse_lazy
+from django.contrib.auth.views import PasswordChangeView
+from django.contrib.messages.views import SuccessMessageMixin
 
 
-def change_password(request):
-    if request.method == 'POST':
-        form = PasswordChangeForm(request.user, request.POST)
-        if form.is_valid():
-            user = form.save()
-            update_session_auth_hash(request, user)  # Important!
-            messages.success(request, 'Your password was successfully updated!')
-            return redirect('grocery_store_home')
-        else:
-            messages.error(request, 'Please correct the error below.')
-    else:
-        form = PasswordChangeForm(request.user)
-    return render(request, 'store/change_password.html', {
-        'form': form
-    })
+class ChangePasswordView(SuccessMessageMixin, PasswordChangeView):
+    template_name = 'store/change_password.html'
+    success_message = "Successfully Changed Your Password"
+    success_url = reverse_lazy('user-profile')
+# def change_password(request):
+#     if request.method == 'POST':
+#         form = PasswordChangeForm(request.user, request.POST)
+#         if form.is_valid():
+#             user = form.save()
+#             update_session_auth_hash(request, user)  # Important!
+#             messages.success(request, 'Your password was successfully updated!')
+#             return redirect('grocery_store_home')
+#         else:
+#             messages.error(request, 'Please correct the error below.')
+#     else:
+#         form = PasswordChangeForm(request.user)
+#     return render(request, 'store/change_password.html', {
+#         'form': form
+#     })
 
 
 def profile(request):
     user = request.user
     user_details = Customer.objects.filter(user=user).first()
-    user_form = ProfileUpdateForm(instance=user_details)
-    customer_form = ProfileUpdateFormUser(instance=user)
+    user_img = user_details.image.url
+    customer_form = ProfileUpdateForm(instance=user_details)
+    user_form = ProfileUpdateFormUser(instance=user)
 
     if request.method == 'POST':
-        customer_form = ProfileUpdateForm(request.POST, instance=user_details)
+        customer_form = ProfileUpdateForm(request.POST, request.FILES, instance=user_details)
         user_form = ProfileUpdateFormUser(request.POST, instance=user)
 
         if user_form.is_valid() and customer_form.is_valid():
             # to add updated data in User table also
             # updated_email = user_form.cleaned_data['email']
             # updated_username = user_form.cleaned_data['username']
-            user_updated = user
+            # user_updated = user
             # user_updated.email = updated_email
             # user_updated.username = updated_username
             user_form.save()
-            user_updated.save()
+            customer_form.save()
 
             messages.success(request, f'Your account has been updated!')
-            return redirect('grocery_store_home')
+            return redirect('user-profile')
 
     context = {
         'user_form': user_form,
         'customer_form':customer_form,
+        'user_img':user_img,
     }
 
     return render(request, 'store/profile.html', context)
@@ -79,10 +90,10 @@ class FeedbackView(TemplateView):
     template_name = 'store/feedback.html'
 
 
-class HomeView(ListView):
-    template_name = 'store/home.html'
-    model = User
-    context_object_name = 'users'
+# class HomeView(ListView):
+#     template_name = 'store/../product/templates/product/home.html'
+#     model = User
+#     context_object_name = 'users'
 
 
 # def loginPage(request):
@@ -188,16 +199,12 @@ def register(request):
     else:
         return render(request, 'store/register.html', {'c_form': c_form, 'u_form': u_form})
 
-# def register(request):
-#     user_register = SignUpForm()
-#     if request.method == 'POST':
-#         user_register = SignUpForm(request.POST)
-#         if user_register.is_valid():
-#             instance = user_register.save()
-#             profile_obj = Profile(user=instance)
-#             profile_obj.save()
-#             messages.success(request, f'Your account has been created! Now you are able to login!!')
-#             return redirect('login')
-#     else:
-#         form = SignUpForm()
-#     return render(request, 'users/register.html', {'form': user_register})
+
+
+
+
+
+
+# Permissions
+# view, add, change, delete product
+# view, change, delete brand

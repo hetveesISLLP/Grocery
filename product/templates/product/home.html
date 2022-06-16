@@ -1,0 +1,57 @@
+{% extends "product/base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block title %} Home {% endblock %}
+
+{% block css %}
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{% static 'product/home.css' %}">
+{% endblock %}
+
+
+
+{% block content %}
+    <section style="background-color: #eee;">
+        <div class="container py-5">
+            <div class="row">
+                {% for product in products %}
+                    <div class="col-md-12 col-lg-4 mb-4 mb-lg-0">
+                        <div class="card mb-4">
+                            <div class="d-flex justify-content-between p-3">
+                            </div>
+                            <img src="{{ product.image.url }}"
+                                 class="card-img-top" alt="Laptop"/>
+                            <div class="card-body">
+{#                                <div class="d-flex justify-content-between">#}
+{#                                    <p class="small"><a href="#!" class="text-muted">{{ product.category }}</a></p>#}
+{#                                    <p class="small text-danger"><s>{{ product.price }}</s></p>#}
+{#                                </div>#}
+
+                                <div class="d-flex justify-content-between mb-3">
+                                    <h4><a href="{% url 'product-detail' product.id %}" class="mb-0">{{ product.name }}</a></h4>
+                                    <h5 class="text-dark mb-0">₹{{product.price}}</h5>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <p class="text-muted mb-0">Available: <span
+                                            class="fw-bold">{{ product.available_quantity }}</span></p>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{#    {% for message in messages %}#}
+{#        <div class="alert alert-success">#}
+{#            <a class="close" href="#" data-dismiss="alert"></a>#}
+{#            {{ message }}#}
+{#        </div>#}
+{#    {% endfor %}#}
+

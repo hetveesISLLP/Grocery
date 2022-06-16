@@ -9,7 +9,6 @@ from django.core.exceptions import ValidationError
 class ProfileUpdateFormUser(forms.ModelForm):
     class Meta:
         model = User
-        # fields = ['age', 'email', 'mobile_no', 'username']
         fields = ['username', 'email']
 
 
@@ -17,7 +16,7 @@ class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Customer
         # fields = ['age', 'email', 'mobile_no', 'username']
-        fields = ['age', 'mobile_no']
+        fields = ['age', 'mobile_no', 'image']
 
 
 class RegistrationForm(UserCreationForm):
