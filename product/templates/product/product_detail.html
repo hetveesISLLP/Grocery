@@ -26,18 +26,44 @@
                             <p>Name : {{ product.name }}</p>
                             <p>Brand : {{ product.brand }}</p>
                             <p>Category : {{ product.category }}</p>
-                            <p>Price : {{ product.price }}</p>
+                            <p>Original Price : {{ product.price }}</p>
+                            <p>Discounted Price : {{ product.calculate_discount }}</p>
                             <p>Volume : {{ product.volume }} {{ product.volume_unit }}</p>
                             <p>Description : {{ product.description }}</p>
                             <p>Discount : {{ product.discount }}</p>
                             <p>Quantity : {{ product.available_quantity }}</p>
-                            <p>Volume : {{ product.volume }}</p>
+
                         </div>
                     </div>
+
+                    {% if request.user.is_authenticated %}
                     <button type="button" class="btn btn-success">Buy Now</button>
-                    <button type="button" class="btn btn-primary">Add to cart</button>
-                    <button type="button" class="btn btn-outline-danger">Add to WishList</button>
+                    <a type="button" href="{% url 'add-to-cart' product.id %}" class="btn btn-primary">Add to cart</a>
+                    <a type="button" href="{% url 'add-to-wishlist' product.id %}" class="btn btn-outline-danger">Add to WishList</a>
+                    {% else %}
+                        <button type="button" class="btn btn-success">Buy Now</button>
+                    <a type="button" href="{% url 'login' %}" class="btn btn-primary">Add to cart</a>
+                    <a type="button" href="{% url 'login' %}" class="btn btn-outline-danger">Add to WishList</a>
+
+                    {% endif %}
+
+
                 </div>
+{#            <div class="review col-md-10">#}
+{##}
+{##}
+{#            <h2>#}
+{#                <br><br>#}
+{#                Reviews :#}
+{#                <hr>#}
+{#            </h2>#}
+{##}
+{#                </div>#}
+{#            <div class = "col-md-2">#}
+{#                <br><br><br><br>#}
+{#                <h4>Add your review here.</h4>#}
+{##}
+{#            </div>#}
 
             </div>
 

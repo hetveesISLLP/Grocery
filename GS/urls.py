@@ -20,5 +20,6 @@ from product.views import DetailProductView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('store.urls')),
-    path('product/<int:pk>/', DetailProductView.as_view(), name='product-detail'),
+    # path('product/<int:pk>/', DetailProductView.as_view(), name='product-detail'),
+    path('product/', include('product.urls')),
 ]

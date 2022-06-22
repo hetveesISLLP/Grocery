@@ -21,7 +21,8 @@
     {% block css %}
 
     {% endblock %}
-
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg bg-light">
@@ -36,11 +37,15 @@
                 <li class="nav-item">
                     <a class="nav-link active" aria-current="page" href="{% url 'grocery_store_home' %}">Home</a>
                 </li>
+                <form method="POST" action="{% url 'product-search' %}">
+                    {% csrf_token %}
+                    <span class="d-flex" role="search">
+                    <input class="form-control me-2" name="searched" id="search_input" type="search"
+                           placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-success" type="submit" id="submit" disabled>Search</button>
 
-                <span class="d-flex" role="search">
-                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                    <button class="btn btn-outline-success" type="submit">Search</button>
                   </span>
+                </form>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'about-us' %}">About</a>
                 </li>
@@ -55,9 +60,10 @@
                                 Orders
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                                <li><a class="dropdown-item" href="#">My Cart</a></li>
-                                <li><a class="dropdown-item" href="#">My WishList</a></li>
+                                <li><a class="dropdown-item" href="{% url 'cart' %}">My Cart</a></li>
+                                <li><a class="dropdown-item" href="{% url 'wishlist' %}">My WishList</a></li>
                                 <li><a class="dropdown-item" href="#">My Orders</a></li>
+
                             </ul>
                         </div>
                         <li class="nav-item">
@@ -86,6 +92,29 @@
 
 
 {% block content %} Base {% endblock %}
+
+
+<!-- jQuery
+when document is ready (DOM loaded)
+id : search_input
+when key press is over i.e. on 'keyup' event
+if that attributes length is 0,
+set disable attribute of id : submit to true
+else
+remove disable attribute
+
+ -->
+<script>
+    $(document).ready(function () {
+        $('#search_input').on('keyup', function () {
+            if ($(this).val().length == 0) {
+                $("#submit").attr("disabled", true);
+            } else {
+                $("#submit").removeAttr("disabled");
+            }
+        });
+    });
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2"
         crossorigin="anonymous"></script>

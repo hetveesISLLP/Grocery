@@ -90,35 +90,6 @@ class FeedbackView(TemplateView):
     template_name = 'store/feedback.html'
 
 
-# class HomeView(ListView):
-#     template_name = 'store/../product/templates/product/home.html'
-#     model = User
-#     context_object_name = 'users'
-
-
-# def loginPage(request):
-#     if request.method == 'POST':
-#         username = request.POST.get('username')
-#         password = request.POST.get('password')
-#
-#         try:
-#             user = User.objects.get(username=username)
-#         except:
-#             messages.error(request, 'User Does Not Exist !')
-#             return redirect('login')
-#
-#         user = authenticate(request, username=username, password=password)
-#         if user is not None:
-#             login(request, user)
-#             return redirect('grocery_store_home')
-#         else:
-#             messages.error(request, 'Invalid Username or password!')
-#             return redirect('login')
-#
-#     context = {}
-#     return render(request, 'store/login.html', context)
-
-
 def registerbrand(request):
     b_form = BrandRegister()
     u_form = RegistrationForm()
@@ -139,6 +110,7 @@ def registerbrand(request):
 
             u_user = u_form.save(commit=False)
             u_user.is_staff = True
+            u_user.is_active = False
             u_user.save()
             b_user = b_form.save(commit=False)
             b_user.user = u_user

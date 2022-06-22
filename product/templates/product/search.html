@@ -1,4 +1,4 @@
-{% extends "product/base.html" %}
+{% extends "product/home.html" %}
 {% load static %}
 {% load crispy_forms_tags %}
 {% block title %} Home {% endblock %}
@@ -10,13 +10,13 @@
     <link rel="stylesheet" type="text/css" href="{% static 'product/home.css' %}">
 {% endblock %}
 
-
-
 {% block content %}
-    <section style="background-color: #eee;">
+    {% if searched %}
+        <p>Showing you {{ searched }} results</p>
+        <section style="background-color: #eee;">
         <div class="container py-5">
             <div class="row">
-                {% for product in products %}
+                {% for product in products_name %}
                     <div class="col-md-12 col-lg-4 mb-4 mb-lg-0">
                         <div class="card mb-4">
                             <div class="d-flex justify-content-between p-3">
@@ -30,24 +30,18 @@
                                         {% if product.price == product.calculate_discount %}
                                             <i>₹{{ product.price }}</i>
                                         {% else %}
-                                            <s>₹{{ product.price }}</s>
-                                            <i><b>({{ product.discount }}% Off)</b></i>
+                                            <i><s>₹{{ product.price }}</s></i>
                                         {% endif %}
                                     </p>
                                 </div>
 
                                 <div class="d-flex justify-content-between mb-3">
-                                    <h4><a href="{% url 'product-detail' product.id %}"
-                                           class="mb-0">{{ product.name }}</a></h4>
-                                    <h5 class="text-dark mb-0">₹{{ product.calculate_discount }}</h5>
-
-
+                                    <h4><a href="{% url 'product-detail' product.id %}" class="mb-0">{{ product.name }}</a></h4>
+                                    <h5 class="text-dark mb-0">₹{{product.calculate_discount}}</h5>
                                 </div>
                                 <div class="d-flex justify-content-between mb-2">
-
-                                    <p class="text-muted mb-0">Available:
-                                        <span class="fw-bold">{{ product.available_quantity }}</span>
-                                    </p>
+                                    <p class="text-muted mb-0">Available: <span
+                                            class="fw-bold">{{ product.available_quantity }}</span></p>
 
                                 </div>
                             </div>
@@ -58,12 +52,8 @@
             </div>
         </div>
     </section>
+    {% else %}
+        <p>Nothing</p>
+
+    {% endif %}
 {% endblock %}
-
-{#    {% for message in messages %}#}
-{#        <div class="alert alert-success">#}
-{#            <a class="close" href="#" data-dismiss="alert"></a>#}
-{#            {{ message }}#}
-{#        </div>#}
-{#    {% endfor %}#}
-

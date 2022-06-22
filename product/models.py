@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from store.models import Customer, Brand
+from django.db.models.fields import IntegerField
 
 
 class Category(models.Model):
@@ -26,11 +27,20 @@ class Product(models.Model):
     name = models.CharField(max_length=50)
     price = models.FloatField()
     image = models.ImageField()
-    discount = models.IntegerField(default=0)
+    discount = IntegerField(default=0)
     description = models.TextField(max_length=500)
     no_of_purchases = models.IntegerField(default=0)
     volume = models.FloatField()
     volume_unit = models.CharField(max_length=10, choices=volume_choices, default="gm")
+
+    @property
+    def calculate_discount(self):
+        if self.discount > 0:
+            discounted_price = self.price - self.price * self.discount / 100
+            return discounted_price
+        if self.discount == 0:
+            discounted_price = self.price
+            return discounted_price
 
     def __str__(self):
         return self.name
@@ -58,6 +68,14 @@ class Cart(models.Model):
     # many-to-many
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
+
+    def sub_total(self):
+        return self.product.calculate_discount * self.quantity
+
+    # def item_total(self):
+    #     items = self.items_set.all()
+    #     total = sum([item.quantity for item in items])
+    #     return total
 
 
 payment_choices = (
