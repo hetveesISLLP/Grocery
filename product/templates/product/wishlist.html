@@ -20,6 +20,10 @@
 
 
 {% block content %}
+
+    {% for m in messages %}
+        {{ m }}
+    {% endfor %}
     <div class="container-fluid row">
         <div class="box-element">
             <a href="/" class="btn btn-outline-dark">&#x2190 Continue Shopping</a>
@@ -40,7 +44,7 @@
                         <br>
                         <a href="{% url 'add-to-cart' item.product.id %}" class="btn btn-success" type="button">Add to
                             cart</a>
-                        <button class="btn btn-danger" type="button">Remove</button>
+                        <a href="{% url 'remove-from-wishlist' item.product.id %}" class="btn btn-danger" type="button">Remove</a>
                         <br>
                     </div>
                     <br>

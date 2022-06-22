@@ -23,21 +23,6 @@ class ChangePasswordView(SuccessMessageMixin, PasswordChangeView):
     template_name = 'store/change_password.html'
     success_message = "Successfully Changed Your Password"
     success_url = reverse_lazy('user-profile')
-# def change_password(request):
-#     if request.method == 'POST':
-#         form = PasswordChangeForm(request.user, request.POST)
-#         if form.is_valid():
-#             user = form.save()
-#             update_session_auth_hash(request, user)  # Important!
-#             messages.success(request, 'Your password was successfully updated!')
-#             return redirect('grocery_store_home')
-#         else:
-#             messages.error(request, 'Please correct the error below.')
-#     else:
-#         form = PasswordChangeForm(request.user)
-#     return render(request, 'store/change_password.html', {
-#         'form': form
-#     })
 
 
 def profile(request):
@@ -52,12 +37,6 @@ def profile(request):
         user_form = ProfileUpdateFormUser(request.POST, instance=user)
 
         if user_form.is_valid() and customer_form.is_valid():
-            # to add updated data in User table also
-            # updated_email = user_form.cleaned_data['email']
-            # updated_username = user_form.cleaned_data['username']
-            # user_updated = user
-            # user_updated.email = updated_email
-            # user_updated.username = updated_username
             user_form.save()
             customer_form.save()
 

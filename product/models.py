@@ -69,13 +69,8 @@ class Cart(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
 
-    def sub_total(self):
-        return self.product.calculate_discount * self.quantity
-
-    # def item_total(self):
-    #     items = self.items_set.all()
-    #     total = sum([item.quantity for item in items])
-    #     return total
+    def item_total(self):
+        return "{:.2f}".format(self.product.calculate_discount * self.quantity)
 
 
 payment_choices = (

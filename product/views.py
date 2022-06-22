@@ -1,15 +1,30 @@
 from .models import Product, Cart, WishList
 from django.views.generic import ListView
 from django.views.generic.detail import DetailView
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from django.contrib import messages
-from django.views.generic.base import TemplateView
 from django.views.generic.base import View
 from store.models import Customer
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ObjectDoesNotExist
 
 
+class RemoveFromWishList(View):
+    def get(self, request, pk):
+        product = Product.objects.get(pk=pk)
+        customer = Customer.objects.get(user=request.user)
+        WishList.objects.filter(customer=customer, product=product).delete()
+        messages.success(request, "Item removed from WishList.")
+        return redirect('wishlist')
+
+
+class RemoveFromCart(View):
+    def get(self, request, pk):
+        product = Product.objects.get(pk=pk)
+        customer = Customer.objects.get(user=request.user)
+        Cart.objects.filter(customer=customer, product=product).delete()
+        messages.success(request, "Item removed from Cart.")
+        return redirect('cart')
 
 
 class AddToWishList(View):
@@ -17,14 +32,19 @@ class AddToWishList(View):
     def get(self, request, pk):
         product = Product.objects.get(pk=pk)
         customer = Customer.objects.get(user=request.user)
-        WishList.objects.create(customer=customer, product=product)
-        messages.success(request, "Item added to WishList.")
-        return redirect('wishlist')
+        try:
+            WishList.objects.get(customer=customer, product=product)
+            messages.error(request, 'Item Already exist')
+            return redirect('wishlist')
+
+        except:
+            WishList.objects.create(customer=customer, product=product)
+            messages.success(request, "Item added to WishList.")
+            return redirect('wishlist')
 
 
 class WishListView(ListView):
     template_name = 'product/wishlist.html'
-    # model = Cart
     context_object_name = 'products'
 
     def get_queryset(self):
@@ -38,44 +58,34 @@ class AddToCart(View):
         product = Product.objects.get(pk=pk)
         customer = Customer.objects.get(user=request.user)
         quantity = 1
-        # cart = Cart.objects.create(customer=customer, product=product, quantity=quantity)
-        Cart.objects.create(customer=customer, product=product, quantity=quantity)
-        messages.success(request, "Item added to cart")
+        try:
+            Cart.objects.get(customer=customer, product=product)
+            messages.error(request, 'Item Already exist in cart')
+            return redirect('cart')
+        except:
+            Cart.objects.create(customer=customer, product=product, quantity=quantity)
+            messages.success(request, "Item added to Cart.")
+            return redirect('cart')
+
+
+class UpdateCart(View):
+    def post(self, request, pk):
+        product = Product.objects.get(pk=pk)
+        customer = Customer.objects.get(user=request.user)
+        cart = Cart.objects.get(customer=customer, product=product)
+        cart.quantity = self.request.POST.get('quantity')
+        cart.save()
         return redirect('cart')
-        # return render(request, 'product/add_to_cart.html', {'cart':cart})
 
-    # def get_queryset(self, request):
-    #     product = Product.objects.get(pk=pk)
-    #     customer = Customer.objects.get(user=request.user)
-    #     quantity = 1
-    #     # cart = Cart.objects.create(customer=customer, product=product, quantity=quantity)
-    #     Cart.objects.create(customer=customer, product=product, quantity=quantity)
-    #     messages.success(request, "Item added")
-    #     return redirect('cart')
-    #     # return render(request, 'product/add_to_cart.html', {'cart':cart})
-
-
-
-# def addtocart(request, pk):
-#     product = Product.objects.get(pk=pk)
-#     customer = Customer.objects.get(user=request.user)
-#     Cart.objects.create(customer=customer, product=product, quantity=1)
-#     messages.success(request, "Item added")
-#     return redirect('cart')
 
 
 class CartView(ListView):
     template_name = 'product/add_to_cart.html'
-    # model = Cart
     context_object_name = 'products'
 
     def get_queryset(self):
         products = Cart.objects.filter(customer=Customer.objects.get(user=self.request.user))
         return products
-
-
-
-
 
 
 class HomeView(ListView):
@@ -104,5 +114,3 @@ class SearchProduct(View):
                           'products_name': products_name,
                       }
                       )
-
-

@@ -35,8 +35,7 @@
 
 .quantity {
     display: inline-block;
-    font-weight: 700;
-    padding-right: 10px;
+    padding-right: 50px;
 
 
 }
@@ -53,7 +52,15 @@
     opacity: .6;
 }
 
+.form-control {
+    width: 100px;
+}
 
 .hidden {
     display: none !important;
+}
+
+.btn-outline-danger {
+    margin-right: 60px;
+    height: 20%;
 }
