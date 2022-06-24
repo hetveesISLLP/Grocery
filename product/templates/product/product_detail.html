@@ -7,6 +7,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-blue-grey.css">
+    <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans'>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" type="text/css" href="{% static 'product/description.css' %}">
 {% endblock %}
 
@@ -37,40 +41,65 @@
                     </div>
 
                     {% if request.user.is_authenticated %}
-                    <button type="button" class="btn btn-success">Buy Now</button>
-                    <a type="button" href="{% url 'add-to-cart' product.id %}" class="btn btn-primary">Add to cart</a>
-                    <a type="button" href="{% url 'add-to-wishlist' product.id %}" class="btn btn-outline-danger">Add to WishList</a>
+                        <button type="button" class="btn btn-success">Buy Now</button>
+                        <a type="button" href="{% url 'add-to-cart' product.id %}" class="btn btn-primary">Add to
+                            cart</a>
+                        <a type="button" href="{% url 'add-to-wishlist' product.id %}" class="btn btn-outline-danger">Add
+                            to WishList</a>
                     {% else %}
                         <button type="button" class="btn btn-success">Buy Now</button>
-                    <a type="button" href="{% url 'login' %}" class="btn btn-primary">Add to cart</a>
-                    <a type="button" href="{% url 'login' %}" class="btn btn-outline-danger">Add to WishList</a>
+                        <a type="button" href="{% url 'login' %}" class="btn btn-primary">Add to cart</a>
+                        <a type="button" href="{% url 'login' %}" class="btn btn-outline-danger">Add to WishList</a>
 
                     {% endif %}
-
-
                 </div>
-{#            <div class="review col-md-10">#}
-{##}
-{##}
-{#            <h2>#}
-{#                <br><br>#}
-{#                Reviews :#}
-{#                <hr>#}
-{#            </h2>#}
-{##}
-{#                </div>#}
-{#            <div class = "col-md-2">#}
-{#                <br><br><br><br>#}
-{#                <h4>Add your review here.</h4>#}
-{##}
-{#            </div>#}
 
+
+                {#            <form action="" method="POST">#}
+                <form action="{% url 'add-review' product.id %}" method="POST">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="review col-md-6">
+                            <h2>
+                                <br><br>
+                                Reviews :
+                                <hr>
+                            </h2>
+                            {% for i in product.review_set.all %}
+                                <div class="w3-container w3-card w3-white w3-round w3-margin"><br>
+                                    <img src="{{ i.customer.image.url }}" alt="Avatar"
+                                         class="w3-left w3-circle w3-margin-right"
+                                         style="width:100px; height: 100px">
+                                    <span class="w3-right w3-opacity">{{ i.date_added }}</span>
+                                    <h4>{{ i.customer }}</h4><br>
+                                    <p class="w3-margin-right">{{ i.review }}.</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="review col-md-1"></div>
+
+                        <div class="review col-md-3">
+                            <br>
+                            <br>
+                            <br>
+                            <br>
+
+
+                            <h3> Add your review here. </h3>
+                            <label for="add_review"></label>
+                            <textarea id="add_review" name="add_review" rows="10" cols="50">
+                        </textarea>
+                            <br>
+                            <br>
+                            <button class="btn btn-outline-success" type="submit">Submit</button>
+                        </div>
+                    </div>
+                </form>
             </div>
-
         </div>
     </section>
-
-
 
 
 {% endblock %}
