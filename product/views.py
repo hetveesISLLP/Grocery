@@ -1,4 +1,4 @@
-from .models import Product, Cart, WishList, Brand, Favourites, Review
+from .models import Product, Cart, WishList, Brand, Favourites, Review, Category
 from django.views.generic import ListView
 from django.views.generic.detail import DetailView
 from django.shortcuts import render, redirect
@@ -6,6 +6,35 @@ from django.db.models import Q
 from django.contrib import messages
 from django.views.generic.base import View
 from store.models import Customer
+
+
+class FilterProduct(View):
+    def get(self, request):
+        min_val = request.GET.get('min_val') if request.GET.get('min_val') != '' else Product.objects.order_by('price').values_list('price', flat=True)[0]
+
+        # values() --> Dictionary --> < QuerySet[{'comment_id': 1}, {'comment_id': 2}] >
+        # values_list() --> Tuples --> < QuerySet[(1,), (2,)] >
+        # values_list() with single field, flat=True --> single values instead of 1-tuples: --> < QuerySet[1, 2] >
+
+        # gives all products in tuple
+        # print(Product.objects.order_by('-price').values_list())
+
+        # gives all product prices in list
+        # print(Product.objects.order_by('-price').values_list('price', flat=True))
+
+        # gives the 1st value
+        # print(Product.objects.order_by('-price').values_list('price', flat=True)[0])
+
+        max_val = request.GET.get('max_val') if request.GET.get('max_val') != '' else Product.objects.order_by('-price').values_list('price', flat=True)[0]
+        products = Product.objects.filter(price__gte=float(min_val),  price__lte = float(max_val))
+        return render(request, 'product/filter_result.html', {'products': products})
+
+
+class CategoryView(ListView):
+    def get(self, request, category):
+        # category = self.request.POST.get('category')
+        products = Product.objects.filter(category=Category.objects.get(name=category))
+        return render(request, 'product/filter_result.html', {'products':products, 'category':Category.objects.all()})
 
 
 class AddReviewView(View):
@@ -137,6 +166,7 @@ class HomeView(ListView):
     template_name = 'product/home.html'
     model = Product
     context_object_name = 'products'
+    extra_context = {'category':Category.objects.all()}
 
 
 class DetailProductView(DetailView):
