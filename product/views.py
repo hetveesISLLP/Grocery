@@ -7,9 +7,12 @@ from django.contrib import messages
 from django.views.generic.base import View
 from store.models import Customer
 
+from django.db.models import Count
+
 #
-# class TrendingView(ListView):
-#     template_name = 'product/trendings.html'
+# class TrendingView(View):
+#     def get(self):
+#         return Product.objects.order_by('no_of_purchases').values_list('no_of_purchases', flat=True)[0:2]
 
 
 class OnlyAddress(View):
@@ -33,7 +36,6 @@ class AddAddressOnlyView(View):
         Cart.objects.filter(customer=customer).delete()
         messages.success(request, "Order successful")
         return redirect('orders')
-
 
 
 class AddAddressView(View):
@@ -231,11 +233,37 @@ class CartView(ListView):
         return products
 
 
-class HomeView(ListView):
-    template_name = 'product/home.html'
-    model = Product
-    context_object_name = 'products'
-    extra_context = {'category': Category.objects.all()}
+# class HomeView(ListView):
+#     template_name = 'product/home.html'
+#     model = Product
+#     context_object_name = 'products'
+#     # 'purchases': Product.objects.order_by('-no_of_purchases')[0:5]
+#     # 'reviews' : Review.objects.order_by('-product')[0:5]
+#     # 'wishlist' : WishList.objects.order_by('-product')[0:5]
+#
+#     extra_context = {
+#         'category': Category.objects.all(),
+#         'trendings': Product.objects.order_by('-no_of_purchases')[0:5]
+#     }
+
+class HomeView(View):
+    def get(self, request):
+        products = Product.objects.all()
+        category = Category.objects.all()
+
+        trendings = Product.objects.order_by('-no_of_purchases').distinct()[0:5]
+        all_products = trendings
+
+        review_id = Review.objects.values_list('product').annotate(product_count=Count('product')).order_by('-product_count')[0:5]
+        # <QuerySet [(20, 3), (21, 1), (23, 1), (22, 1)]>
+        for i in review_id:
+            all_products |= Product.objects.filter(pk=i[0])
+
+        wishlist_id = WishList.objects.values_list('product').annotate(product_count=Count('product')).order_by('-product_count')[0:5]
+        for i in wishlist_id:
+            all_products |= Product.objects.filter(pk=i[0])
+
+        return render(request, 'product/home.html', {'products':products,'category':category,'all_products':all_products})
 
 
 class DetailProductView(DetailView):
