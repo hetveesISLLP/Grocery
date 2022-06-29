@@ -250,20 +250,24 @@ class HomeView(View):
     def get(self, request):
         products = Product.objects.all()
         category = Category.objects.all()
+        # all_products = []
 
         trendings = Product.objects.order_by('-no_of_purchases').distinct()[0:5]
         all_products = trendings
 
-        review_id = Review.objects.values_list('product').annotate(product_count=Count('product')).order_by('-product_count')[0:5]
+        review_id = Review.objects.values_list('product').annotate(product_count=Count('product')).order_by(
+            '-product_count')[0:5]
         # <QuerySet [(20, 3), (21, 1), (23, 1), (22, 1)]>
         for i in review_id:
             all_products |= Product.objects.filter(pk=i[0])
 
-        wishlist_id = WishList.objects.values_list('product').annotate(product_count=Count('product')).order_by('-product_count')[0:5]
+        wishlist_id = WishList.objects.values_list('product').annotate(product_count=Count('product')).order_by(
+            '-product_count')[0:5]
         for i in wishlist_id:
             all_products |= Product.objects.filter(pk=i[0])
 
-        return render(request, 'product/home.html', {'products':products,'category':category,'all_products':all_products})
+        return render(request, 'product/home.html',
+                      {'products': products, 'category': category, 'all_products': all_products})
 
 
 class DetailProductView(DetailView):
