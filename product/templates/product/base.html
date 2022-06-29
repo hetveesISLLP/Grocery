@@ -51,7 +51,7 @@
                                 <li><a class="dropdown-item" href="{% url 'cart' %}">My Cart</a></li>
                                 <li><a class="dropdown-item" href="{% url 'favourites' %}">View Favourites</a></li>
                                 <li><a class="dropdown-item" href="{% url 'wishlist' %}">My WishList</a></li>
-                                <li><a class="dropdown-item" href="#">My Orders</a></li>
+                                <li><a class="dropdown-item" href="{% url 'orders' %}">My Orders</a></li>
 
                             </ul>
                         </div>
@@ -82,17 +82,6 @@
 
 {% block content %} Base {% endblock %}
 
-
-<!-- jQuery
-when document is ready (DOM loaded)
-id : search_input
-when key press is over i.e. on 'keyup' event
-if that attributes length is 0,
-set disable attribute of id : submit to true
-else
-remove disable attribute
-
- -->
 <script>
     $(document).ready(function () {
         $('#search_input').on('keyup', function () {

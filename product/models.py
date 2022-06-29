@@ -96,3 +96,8 @@ class Invoice(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     quantity = models.IntegerField()
+
+    @property
+    def total_price(self):
+        return "{:.2f}".format(self.product.calculate_discount * self.quantity)
+

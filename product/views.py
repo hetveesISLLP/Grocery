@@ -1,4 +1,4 @@
-from .models import Product, Cart, WishList, Brand, Favourites, Review, Category
+from .models import Product, Cart, WishList, Brand, Favourites, Review, Category, Order, Invoice
 from django.views.generic import ListView
 from django.views.generic.detail import DetailView
 from django.shortcuts import render, redirect
@@ -7,10 +7,77 @@ from django.contrib import messages
 from django.views.generic.base import View
 from store.models import Customer
 
+#
+# class TrendingView(ListView):
+#     template_name = 'product/trendings.html'
+
+
+class OnlyAddress(View):
+    def get(self, request):
+        return render(request, 'product/only_address.html', {})
+
+
+class AddAddressOnlyView(View):
+    def post(self, request):
+        customer = Customer.objects.get(user=self.request.user)
+        cart_products = Cart.objects.filter(customer=customer)
+        address = self.request.POST.get('address-buy')
+        total_amount = 0
+        order = Order.objects.create(customer=customer, address=address, total_amount=0)
+        for i in cart_products:
+            product = i
+            product.product.no_of_purchases += 1
+            total_amount += product.product.calculate_discount * product.quantity
+            Invoice.objects.create(order=order, product=product.product, quantity=product.quantity)
+        Order.objects.filter(customer=customer, address=address, total_amount=0).update(total_amount=total_amount)
+        Cart.objects.filter(customer=customer).delete()
+        messages.success(request, "Order successful")
+        return redirect('orders')
+
+
+
+class AddAddressView(View):
+    def post(self, request, pk):
+        customer = Customer.objects.get(user=self.request.user)
+        product = Product.objects.get(pk=pk)
+        address = self.request.POST.get('address-buy')
+        quantity = self.request.POST.get('quantityy')
+        available_items = Product.objects.get(pk=pk).available_quantity
+        if available_items >= float(quantity):
+            items_left = available_items - float(quantity)
+            order = Order.objects.create(customer=customer, address=address, total_amount=Product.objects.get(pk=pk).calculate_discount)
+            Invoice.objects.create(order=order, product=product, quantity=quantity)
+            number_purchased = Product.objects.get(pk=pk).no_of_purchases
+            number_purchased += float(quantity)
+            Product.objects.filter(pk=pk).update(no_of_purchases=number_purchased)
+            Product.objects.filter(pk=pk).update(available_quantity=items_left)
+            messages.success(request, "Order successful")
+            return redirect('orders')
+        else:
+            messages.success(request, "Item not available in that quantity")
+            return redirect('grocery_store_home')
+
+
+
+class OrderDetailsView(View):
+    def get(self, request, pk):
+        return render(request, 'product/buy_address.html', {'pk':pk})
+
+
+class PurchasedView(View):
+    def get(self, request):
+        orders = Order.objects.filter(customer=Customer.objects.get(user=self.request.user))
+        items = []
+        for i in orders:
+            items += Invoice.objects.filter(order=i)
+
+        return render(request, 'product/view_purchased.html', {'items':items})
+
 
 class FilterProduct(View):
     def get(self, request):
-        min_val = request.GET.get('min_val') if request.GET.get('min_val') != '' else Product.objects.order_by('price').values_list('price', flat=True)[0]
+        min_val = request.GET.get('min_val') if request.GET.get('min_val') != '' else \
+        Product.objects.order_by('price').values_list('price', flat=True)[0]
 
         # values() --> Dictionary --> < QuerySet[{'comment_id': 1}, {'comment_id': 2}] >
         # values_list() --> Tuples --> < QuerySet[(1,), (2,)] >
@@ -25,8 +92,9 @@ class FilterProduct(View):
         # gives the 1st value
         # print(Product.objects.order_by('-price').values_list('price', flat=True)[0])
 
-        max_val = request.GET.get('max_val') if request.GET.get('max_val') != '' else Product.objects.order_by('-price').values_list('price', flat=True)[0]
-        products = Product.objects.filter(price__gte=float(min_val),  price__lte = float(max_val))
+        max_val = request.GET.get('max_val') if request.GET.get('max_val') != '' else \
+        Product.objects.order_by('-price').values_list('price', flat=True)[0]
+        products = Product.objects.filter(price__gte=float(min_val), price__lte=float(max_val))
         return render(request, 'product/filter_result.html', {'products': products})
 
 
@@ -34,7 +102,7 @@ class CategoryView(ListView):
     def get(self, request, category):
         # category = self.request.POST.get('category')
         products = Product.objects.filter(category=Category.objects.get(name=category))
-        return render(request, 'product/filter_result.html', {'products':products, 'category':Category.objects.all()})
+        return render(request, 'product/filter_result.html', {'products': products, 'category': Category.objects.all()})
 
 
 class AddReviewView(View):
@@ -58,10 +126,11 @@ class FavouriteView(View):
             products = Product.objects.filter(brand=fav[0].brand)
             for item in fav[1:]:
                 products |= Product.objects.filter(brand=item.brand)
-            return render(request, 'product/favourites.html', {'products':products, 'all_brands':all_brands, 'fav':fav})
+            return render(request, 'product/favourites.html',
+                          {'products': products, 'all_brands': all_brands, 'fav': fav})
         else:
             messages.error(request, "You have no favourites")
-            return render(request, 'product/favourites.html', {'all_brands':all_brands,})
+            return render(request, 'product/favourites.html', {'all_brands': all_brands, })
 
 
 class RemoveFromFavourites(View):
@@ -166,7 +235,7 @@ class HomeView(ListView):
     template_name = 'product/home.html'
     model = Product
     context_object_name = 'products'
-    extra_context = {'category':Category.objects.all()}
+    extra_context = {'category': Category.objects.all()}
 
 
 class DetailProductView(DetailView):

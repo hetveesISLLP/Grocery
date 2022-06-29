@@ -41,7 +41,7 @@
                     </div>
 
                     {% if request.user.is_authenticated %}
-                        <button type="button" class="btn btn-success">Buy Now</button>
+                        <a type="button" href="{% url 'buy-now' product.id %}" class="btn btn-outline-success">Buy Now</a>
                         <a type="button" href="{% url 'add-to-cart' product.id %}" class="btn btn-primary">Add to
                             cart</a>
                         <a type="button" href="{% url 'add-to-wishlist' product.id %}" class="btn btn-outline-danger">Add

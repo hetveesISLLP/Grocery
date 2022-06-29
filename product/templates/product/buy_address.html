@@ -1,0 +1,47 @@
+{% extends "product/base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block title %} Home {% endblock %}
+
+{% block css %}
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-blue-grey.css">
+    <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans'>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="{% static 'product/css/description.css' %}">
+{% endblock %}
+
+
+{% block content %}
+    <form action="{% url 'buy-address' pk %}" method="POST">
+        {% csrf_token %}
+        <label for="address-buy">Add Your Address here : </label>
+        <textarea id="address-buy" name="address-buy" rows="10" cols="50"></textarea>
+
+
+        <span><input name="quantityy" id="quantityy" min="1" max="20" name="quantity" type="number"
+                     class="form-control" readonly value="{{ item.quantity }}"/>Quantity</span>
+        <button onclick="this.parentNode.querySelector('input[type=number]').stepUp()" type="button">+</button>
+        <button onclick="this.parentNode.querySelector('input[type=number]').stepDown()" type="button">-</button>
+
+        <button class="btn btn-outline-success" type="submit">Submit</button>
+
+        <script>
+            var i = 0
+            var total_amount = 0
+            while (true) {
+                i += 1
+                var price = 'item_price' + i
+                if (document.getElementById(price)) {
+                    total_amount += parseFloat((document.getElementById(price).innerHTML))
+                } else {
+                    break
+                }
+            }
+            document.getElementById('total_price').innerText = 'Total ₹ ' + total_amount.toFixed(2)
+        </script>
+    </form>
+{% endblock %}

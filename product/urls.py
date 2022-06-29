@@ -1,7 +1,9 @@
 from django.urls import path
 from .views import DetailProductView, SearchProduct, CartView, AddToCart, WishListView, AddToWishList, \
     RemoveFromWishList, RemoveFromCart, UpdateCart, AddToFavourites, FavouriteView, RemoveFromFavourites, \
-    AddReviewView, CategoryView, FilterProduct
+    AddReviewView, CategoryView, FilterProduct,OrderDetailsView, AddAddressView, PurchasedView, OnlyAddress, \
+    AddAddressOnlyView
+
 
 urlpatterns = [
     path('search/', SearchProduct.as_view(), name='product-search'),
@@ -24,4 +26,12 @@ urlpatterns = [
 
     path('category/<str:category>/', CategoryView.as_view(), name='view-category'),
     path('filter/', FilterProduct.as_view(), name='price-filter'),
+
+    path('<int:pk>/add_address/', AddAddressView.as_view(), name='buy-address'),
+    path('<int:pk>/buy_now/', OrderDetailsView.as_view(), name='buy-now'),
+    path('orders/', PurchasedView.as_view(), name='orders'),
+
+    path('checkout/', OnlyAddress.as_view(), name='buy-now-cart'),
+    path('checkout/address', AddAddressOnlyView.as_view(), name='checkout-address')
+
 ]
