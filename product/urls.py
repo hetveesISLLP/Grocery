@@ -2,7 +2,7 @@ from django.urls import path
 from .views import DetailProductView, SearchProduct, CartView, AddToCart, WishListView, AddToWishList, \
     RemoveFromWishList, RemoveFromCart, UpdateCart, AddToFavourites, FavouriteView, RemoveFromFavourites, \
     AddReviewView, CategoryView, FilterProduct,OrderDetailsView, AddAddressView, PurchasedView, OnlyAddress, \
-    AddAddressOnlyView
+    AddAddressOnlyView, AddCategory, UpdateBrandName, AddProductView, ProductView, UpdateProductView
 
 
 urlpatterns = [
@@ -32,6 +32,12 @@ urlpatterns = [
     path('orders/', PurchasedView.as_view(), name='orders'),
 
     path('checkout/', OnlyAddress.as_view(), name='buy-now-cart'),
-    path('checkout/address', AddAddressOnlyView.as_view(), name='checkout-address')
+    path('checkout/address', AddAddressOnlyView.as_view(), name='checkout-address'),
+
+    path('add_category/', AddCategory.as_view(), name="add-category"),
+    path('update_brand/<int:pk>/', UpdateBrandName.as_view(), name="update-brand_name"),
+    path('add_product/<int:pk>/', AddProductView.as_view(), name="add-product"),
+    path('view_product/', ProductView.as_view(), name='view-product'),
+    path('update_product/<int:pk>/', UpdateProductView.as_view(), name='update-product'),
 
 ]

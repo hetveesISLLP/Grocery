@@ -5,14 +5,50 @@ from django.shortcuts import render, redirect
 from django.db.models import Q
 from django.contrib import messages
 from django.views.generic.base import View
+from django.views.generic.edit import CreateView, UpdateView
 from store.models import Customer
-
+from django.urls import reverse_lazy
 from django.db.models import Count
 
-#
-# class TrendingView(View):
-#     def get(self):
-#         return Product.objects.order_by('no_of_purchases').values_list('no_of_purchases', flat=True)[0:2]
+class AddCategory(CreateView):
+    model = Category
+    fields = ['name']
+    template_name = 'product/add_category.html'
+    success_url = reverse_lazy('grocery_store_home')
+
+
+class ProductView(View):
+    def get(self, request):
+        return render(request, 'product/view_products.html', {'products':Product.objects.filter(brand=self.request.user.brand)})
+
+
+class UpdateProductView(UpdateView):
+    model = Product
+    fields = ['name', 'price', 'image', 'description', 'available_quantity',  'discount', 'category', 'volume', 'volume_unit']
+    template_name = 'product/update_product.html'
+    success_url = reverse_lazy('grocery_store_home')
+
+
+
+class AddProductView(CreateView):
+    model = Product
+    fields = ['name', 'price', 'image', 'description', 'available_quantity',  'discount', 'category', 'volume', 'volume_unit']
+    template_name = 'product/add_product.html'
+    success_url = reverse_lazy('grocery_store_home')
+
+
+    def form_valid(self, form):
+        form.instance.brand = Brand.objects.get(user=self.request.user)
+        form.instance.no_of_purchases = 0
+        return super(AddProductView, self).form_valid(form)
+
+
+
+class UpdateBrandName(UpdateView):
+    model = Brand
+    fields = ['brand']
+    template_name = 'product/update_brand_name.html'
+    success_url = reverse_lazy('grocery_store_home')
 
 
 class OnlyAddress(View):
@@ -248,26 +284,31 @@ class CartView(ListView):
 
 class HomeView(View):
     def get(self, request):
-        products = Product.objects.all()
-        category = Category.objects.all()
-        # all_products = []
+        if request.user.is_staff:
+            brand = Brand.objects.get(user=request.user)
+            return render(request,'product/admin_func.html', {'brand':brand})
+        elif request.user.is_superuser:
+            return redirect('admin:index')
+        else:
+            products = Product.objects.all()
+            category = Category.objects.all()
 
-        trendings = Product.objects.order_by('-no_of_purchases').distinct()[0:5]
-        all_products = trendings
+            trendings = Product.objects.order_by('-no_of_purchases').distinct()[0:5]
+            all_products = trendings
 
-        review_id = Review.objects.values_list('product').annotate(product_count=Count('product')).order_by(
-            '-product_count')[0:5]
-        # <QuerySet [(20, 3), (21, 1), (23, 1), (22, 1)]>
-        for i in review_id:
-            all_products |= Product.objects.filter(pk=i[0])
+            review_id = Review.objects.values_list('product').annotate(product_count=Count('product')).order_by(
+                '-product_count')[0:5]
+            # <QuerySet [(20, 3), (21, 1), (23, 1), (22, 1)]>
+            for i in review_id:
+                all_products |= Product.objects.filter(pk=i[0])
 
-        wishlist_id = WishList.objects.values_list('product').annotate(product_count=Count('product')).order_by(
-            '-product_count')[0:5]
-        for i in wishlist_id:
-            all_products |= Product.objects.filter(pk=i[0])
+            wishlist_id = WishList.objects.values_list('product').annotate(product_count=Count('product')).order_by(
+                '-product_count')[0:5]
+            for i in wishlist_id:
+                all_products |= Product.objects.filter(pk=i[0])
 
-        return render(request, 'product/home.html',
-                      {'products': products, 'category': category, 'all_products': all_products})
+            return render(request, 'product/home.html',
+                          {'products': products, 'category': category, 'all_products': all_products})
 
 
 class DetailProductView(DetailView):
