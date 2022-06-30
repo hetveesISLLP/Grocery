@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from store.models import Customer, Brand
 from django.db.models.fields import IntegerField
-
+import math
 
 class Category(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -37,10 +37,10 @@ class Product(models.Model):
     def calculate_discount(self):
         if self.discount > 0:
             discounted_price = self.price - self.price * self.discount / 100
-            return discounted_price
+            return "{:.2f}".format(discounted_price)
         if self.discount == 0:
             discounted_price = self.price
-            return discounted_price
+            return "{:.2f}".format(discounted_price)
 
     def __str__(self):
         return self.name
@@ -70,7 +70,7 @@ class Cart(models.Model):
     quantity = models.IntegerField()
 
     def item_total(self):
-        return "{:.2f}".format(self.product.calculate_discount * self.quantity)
+        return "{:.2f}".format(float(self.product.calculate_discount) * float(self.quantity))
 
 
 payment_choices = (
@@ -99,5 +99,5 @@ class Invoice(models.Model):
 
     @property
     def total_price(self):
-        return "{:.2f}".format(self.product.calculate_discount * self.quantity)
+        return "{:.2f}".format(float(self.product.calculate_discount) * float(self.quantity))
 

@@ -5,10 +5,47 @@ from django.shortcuts import render, redirect
 from django.db.models import Q
 from django.contrib import messages
 from django.views.generic.base import View
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.edit import CreateView, UpdateView,DeleteView
 from store.models import Customer
 from django.urls import reverse_lazy
 from django.db.models import Count
+from io import BytesIO
+from xhtml2pdf import pisa
+from django.http import HttpResponse
+from django.template.loader import get_template
+
+
+class DownloadInvoice(View):
+    def get(selfself, request, pk):
+        # template = get_template('product/detail_order.html')
+        order = Order.objects.get(pk=pk)
+        invoice = Invoice.objects.filter(order=order)
+        context = {
+            'all_orders' : Invoice.objects.filter(order=pk),
+            'order': order,
+            'order_ids' : order.id
+                }
+        pdf = RenderToPdf('product/invoice.html', context)
+        if pdf:
+            response = HttpResponse(pdf, content_type='application/pdf')
+            filename = "Invoice_%s.pdf" % context['order_ids']
+
+            content = "file; filename='%s'" % (filename)
+            response['Content-Disposition'] = content
+            return response
+        return HttpResponse("Not found")
+
+
+def RenderToPdf(template_src, context_dict={}):
+    template = get_template(template_src)
+    html = template.render(context_dict)
+    result = BytesIO()
+    pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
+    if not pdf.err:
+        return HttpResponse(result.getvalue(), content_type='application/pdf')
+    return None
+
+
 
 class AddCategory(CreateView):
     model = Category
@@ -20,6 +57,13 @@ class AddCategory(CreateView):
 class ProductView(View):
     def get(self, request):
         return render(request, 'product/view_products.html', {'products':Product.objects.filter(brand=self.request.user.brand)})
+
+
+# class DeleteProductView(DeleteView):
+#     model = Product
+#     template_name = 'product/delete_product.html'
+#     success_url = reverse_lazy('grocery_store_home')
+
 
 
 class UpdateProductView(UpdateView):
@@ -62,16 +106,27 @@ class AddAddressOnlyView(View):
         cart_products = Cart.objects.filter(customer=customer)
         address = self.request.POST.get('address-buy')
         total_amount = 0
-        order = Order.objects.create(customer=customer, address=address, total_amount=0)
+        invoices = []
+
         for i in cart_products:
-            product = i
-            product.product.no_of_purchases += 1
-            total_amount += product.product.calculate_discount * product.quantity
-            Invoice.objects.create(order=order, product=product.product, quantity=product.quantity)
-        Order.objects.filter(customer=customer, address=address, total_amount=0).update(total_amount=total_amount)
-        Cart.objects.filter(customer=customer).delete()
-        messages.success(request, "Order successful")
-        return redirect('orders')
+            if i.product.available_quantity >= i.quantity:
+                product = i
+                i.product.available_quantity -= i.quantity
+                i.product.save()
+                total_amount += float(product.product.calculate_discount) * product.quantity
+                invoices.append(Invoice(product=product.product, quantity=product.quantity))
+            else:
+                break
+        else:
+            order = Order.objects.create(customer=customer, address=address, total_amount=0)
+            for i in invoices:
+                i.order = order
+                i.save()
+            Order.objects.filter(customer=customer, address=address, total_amount=0).update(total_amount=total_amount)
+            Cart.objects.filter(customer=customer).delete()
+            messages.success(request, "Order successful")
+            return redirect('orders')
+        return redirect('grocery_store_home')
 
 
 class AddAddressView(View):
@@ -104,12 +159,22 @@ class OrderDetailsView(View):
 
 class PurchasedView(View):
     def get(self, request):
-        orders = Order.objects.filter(customer=Customer.objects.get(user=self.request.user))
-        items = []
-        for i in orders:
-            items += Invoice.objects.filter(order=i)
+        items = Order.objects.filter(customer=Customer.objects.get(user=self.request.user))
+        # items = []
+        # for i in orders:
+        #     items += Invoice.objects.filter(order=i)
 
         return render(request, 'product/view_purchased.html', {'items':items})
+
+class DetailPurchasedView(View):
+    def get(self, request, pk):
+        order = Order.objects.get(pk=pk)
+        all_orders = Invoice.objects.filter(order=pk)
+        return render(request, 'product/detail_order.html', {'all_orders':all_orders, 'order':order})
+
+
+
+
 
 
 class FilterProduct(View):

@@ -2,7 +2,9 @@ from django.urls import path
 from .views import DetailProductView, SearchProduct, CartView, AddToCart, WishListView, AddToWishList, \
     RemoveFromWishList, RemoveFromCart, UpdateCart, AddToFavourites, FavouriteView, RemoveFromFavourites, \
     AddReviewView, CategoryView, FilterProduct,OrderDetailsView, AddAddressView, PurchasedView, OnlyAddress, \
-    AddAddressOnlyView, AddCategory, UpdateBrandName, AddProductView, ProductView, UpdateProductView
+    AddAddressOnlyView, AddCategory, UpdateBrandName, AddProductView, ProductView, UpdateProductView, \
+    DetailPurchasedView, DownloadInvoice
+
 
 
 urlpatterns = [
@@ -30,6 +32,7 @@ urlpatterns = [
     path('<int:pk>/add_address/', AddAddressView.as_view(), name='buy-address'),
     path('<int:pk>/buy_now/', OrderDetailsView.as_view(), name='buy-now'),
     path('orders/', PurchasedView.as_view(), name='orders'),
+    path('orders/<int:pk>/', DetailPurchasedView.as_view(), name='detail-orders'),
 
     path('checkout/', OnlyAddress.as_view(), name='buy-now-cart'),
     path('checkout/address', AddAddressOnlyView.as_view(), name='checkout-address'),
@@ -39,5 +42,7 @@ urlpatterns = [
     path('add_product/<int:pk>/', AddProductView.as_view(), name="add-product"),
     path('view_product/', ProductView.as_view(), name='view-product'),
     path('update_product/<int:pk>/', UpdateProductView.as_view(), name='update-product'),
+
+    path('download_invoice/<int:pk>/', DownloadInvoice.as_view(), name="download-invoice")
 
 ]

@@ -19,11 +19,11 @@
     <form action="{% url 'buy-address' pk %}" method="POST">
         {% csrf_token %}
         <label for="address-buy">Add Your Address here : </label>
-        <textarea id="address-buy" name="address-buy" rows="10" cols="50"></textarea>
+        <textarea id="address-buy" name="address-buy" rows="10" cols="50" required></textarea>
 
 
         <span><input name="quantityy" id="quantityy" min="1" max="20" name="quantity" type="number"
-                     class="form-control" readonly value="{{ item.quantity }}"/>Quantity</span>
+                     value="1" class="form-control" readonly value="{{ item.quantity }}" required/>Quantity</span>
         <button onclick="this.parentNode.querySelector('input[type=number]').stepUp()" type="button">+</button>
         <button onclick="this.parentNode.querySelector('input[type=number]').stepDown()" type="button">-</button>
 

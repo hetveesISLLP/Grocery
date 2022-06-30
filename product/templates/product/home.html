@@ -141,7 +141,8 @@
         <p>Based on Number of purchases, wishlist, reviews</p>
         <div class="row">
             {% for product in all_products %}
-                <div class="col-md-12 col-lg-4 mb-4 mb-lg-0">
+                {% if product.available_quantity != 0 %}
+                    <div class="col-md-12 col-lg-4 mb-4 mb-lg-0">
                     <div class="card mb-4">
                         <div class="d-flex justify-content-between p-3">
                         </div>
@@ -175,12 +176,13 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                    </div>
+                {% endif %}
+
             {% endfor %}
         </div>
     </div>
 </section>
-
 
 
 <!-- all products -->
@@ -189,6 +191,7 @@
         <h3>All Products</h3>
         <div class="row">
             {% for product in products %}
+                {% if product.available_quantity != 0 %}
                 <div class="col-md-12 col-lg-4 mb-4 mb-lg-0">
                     <div class="card mb-4">
                         <div class="d-flex justify-content-between p-3">
@@ -224,6 +227,7 @@
                         </div>
                     </div>
                 </div>
+                {% endif %}
             {% endfor %}
         </div>
     </div>

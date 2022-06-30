@@ -25,45 +25,48 @@
             <div class="box-element">
                 <div class="cart-row">
                     <div style="flex: 1;"><strong>Order</strong></div>
-                    <div style="flex: 2;"><strong>Image</strong></div>
-                    <div style="flex: 2;"><strong>Item</strong></div>
-                    <div style="flex: 1;"><strong>Unit Price</strong></div>
-                    <div style="flex: 1;"><strong>Quantity</strong></div>
+{#                    <div style="flex: 2;"><strong>Image</strong></div>#}
+{#                    <div style="flex: 2;"><strong>Item</strong></div>#}
+{#                    <div style="flex: 1;"><strong>Unit Price</strong></div>#}
+{#                    <div style="flex: 1;"><strong>Quantity</strong></div>#}
                     <div style="flex: 1;"><strong>Address</strong></div>
                     <div style="flex: 1;"><strong>DateTime</strong></div>
                     <div style="flex: 1;"><strong>Payment Method</strong></div>
                     <div style="flex: 1;"><strong>Total Amount</strong></div>
+                    <div style="flex: 1;"><strong>Download</strong></div>
                 </div>
 
                 {% for item in items %}
                     <div class="cart-row">
-                        <div style="flex: 1;">{{ item.order.id }}</div>
-                        <div style="flex: 2;"><img class="row-image" src="{{ item.product.image.url }}" alt=""></div>
-                        <div style="flex: 2;">{{ item.product.name }}</div>
-                        <div style="flex: 1;">(₹{{ item.product.calculate_discount }})</div>
-                        <div style="flex:1" ;>{{ item.quantity }}</div>
-                        <div style="flex: 1;">{{ item.order.address }}</div>
-                        <div style="flex: 1;">{{ item.order.datetime }}</div>
-                        <div style="flex: 1;">{{ item.order.payment_method }}</div>
-                        <div id="quan_price{{ forloop.counter }}" style="flex: 1;">{{ item.total_price }}</div>
+                        <div style="flex: 1;"><a href="{% url 'detail-orders' item.id %}">{{ item.id }}</a></div>
+{#                        <div style="flex: 2;"><img class="row-image" src="{{ item.product.image.url }}" alt=""></div>#}
+{#                        <div style="flex: 2;">{{ item.product.name }}</div>#}
+{#                        <div style="flex: 1;">(₹{{ item.product.calculate_discount }})</div>#}
+{#                        <div style="flex:1" ;>{{ item.quantity }}</div>#}
+                        <div style="flex: 1;">{{ item.address }}</div>
+                        <div style="flex: 1;">{{ item.datetime }}</div>
+                        <div style="flex: 1;">{{ item.payment_method }}</div>
+                        <div style="flex: 1;">{{ item.total_amount }}</div>
+                        <div style="flex: 1;"><a href="{% url 'download-invoice' item.id %}">Download Invoice</a></div>
+
                     </div>
                 {% endfor %}
             </div>
         </div>
     </div>
 
-    <script>
-        var i = 0
-        var total_amount = 0
-        while (true) {
-            i += 1
-            var price = 'quan_price' + i
-            if (document.getElementById(price)) {
-                total_amount += parseFloat((document.getElementById(price).innerHTML))
-            } else {
-                break
-            }
-        }
-        document.getElementById('final_price').innerText = 'Total ₹ ' + total_amount.toFixed(2)
-    </script>
+{#    <script>#}
+{#        var i = 0#}
+{#        var total_amount = 0#}
+{#        while (true) {#}
+{#            i += 1#}
+{#            var price = 'quan_price' + i#}
+{#            if (document.getElementById(price)) {#}
+{#                total_amount += parseFloat((document.getElementById(price).innerHTML))#}
+{#            } else {#}
+{#                break#}
+{#            }#}
+{#        }#}
+{#        document.getElementById('final_price').innerText = 'Total ₹ ' + total_amount.toFixed(2)#}
+{#    </script>#}
 {% endblock %}
