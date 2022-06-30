@@ -284,7 +284,7 @@ class CartView(ListView):
 
 class HomeView(View):
     def get(self, request):
-        if request.user.is_staff:
+        if request.user.is_staff and not request.user.is_superuser:
             brand = Brand.objects.get(user=request.user)
             return render(request,'product/admin_func.html', {'brand':brand})
         elif request.user.is_superuser:

@@ -106,7 +106,7 @@ def registerbrand(request):
             brand_admin_privileges.user_set.add(u_user)
 
             messages.success(request, "Successfully created brand")
-            return redirect('admin:index')
+            return redirect('login')
 
         else:
             # messages.error(request, "Registration failed.")
