@@ -170,3 +170,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 django_on_heroku.settings(locals())
+
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEYS')
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEYS')

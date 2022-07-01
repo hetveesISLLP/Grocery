@@ -17,6 +17,7 @@
 
 
 {% block content %}
+    {% if products %}
 
     {% for m in messages %}
         {{ m }}
@@ -102,4 +103,13 @@
             </div>
         </div>
     </div>
+    {% else %}
+        <div class="col-lg-12">
+            <div class="box-element">
+                <a href="/" class="btn btn-outline-dark">&#x2190 Start Shopping</a>
+                <br><br>
+            </div>
+        <p>No items in Cart</p>
+        </div>
+    {% endif %}
 {% endblock %}

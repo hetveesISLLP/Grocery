@@ -40,7 +40,7 @@ urlpatterns = [
     path('add_category/', AddCategory.as_view(), name="add-category"),
     path('update_brand/<int:pk>/', UpdateBrandName.as_view(), name="update-brand_name"),
     path('add_product/<int:pk>/', AddProductView.as_view(), name="add-product"),
-    path('view_product/', ProductView.as_view(), name='view-product'),
+    path('', ProductView.as_view(), name='view-product'),
     path('update_product/<int:pk>/', UpdateProductView.as_view(), name='update-product'),
 
     path('download_invoice/<int:pk>/', DownloadInvoice.as_view(), name="download-invoice")

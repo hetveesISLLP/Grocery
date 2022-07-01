@@ -19,18 +19,18 @@
 {% block content %}
     {#    {% include "store/messages.html" %}#}
     {% if messages %}
-{#        {% for message in messages %}#}
-{#            <div class="alert alert-danger">#}
-{#                <a class="close" href="#" data-dismiss="alert"></a>#}
-{#                   {{ message }}#}
-{#            </div>#}
-{#        {% endfor %}#}
+        {#        {% for message in messages %}#}
+        {#            <div class="alert alert-danger">#}
+        {#                <a class="close" href="#" data-dismiss="alert"></a>#}
+        {#                   {{ message }}#}
+        {#            </div>#}
+        {#        {% endfor %}#}
     {% endif %}
     <div class="content-section">
         <form method="POST">
             {% csrf_token %}
             <fieldset class="form-group">
-            Registration
+                Registration
                 <legend class="border-bottom mb-4">
                     <div>
 
@@ -41,21 +41,21 @@
                             {% if field.errors %}
                                 {{ field }}
                                 <div class="invalid-feedback">
-                                {% for error in field.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
+                                    {% for error in field.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
                                 </div>
                             {% else %}
                                 {{ field }}
                             {% endif %}
-{#                            {{ field }}#}
+                            {#                            {{ field }}#}
                             <br>
-{#                            {% if field.help_text %}#}
-{#                              <small style="color: grey">{{ field.help_text }}</small><br><br>#}
-{#                            {% endif %}#}
-{#                            {% for error in field.errors %}#}
-{#                              <p style="color: red">{{ error }}</p>#}
-{#                            {% endfor %}#}
+                            {#                            {% if field.help_text %}#}
+                            {#                              <small style="color: grey">{{ field.help_text }}</small><br><br>#}
+                            {#                            {% endif %}#}
+                            {#                            {% for error in field.errors %}#}
+                            {#                              <p style="color: red">{{ error }}</p>#}
+                            {#                            {% endfor %}#}
 
                         {% endfor %}
 
@@ -64,23 +64,24 @@
                             {{ field }}
                             <br>
                             {% if field.help_text %}
-                              <small style="color: grey">{{ field.help_text }}</small><br><br>
+                                <small style="color: grey">{{ field.help_text }}</small><br><br>
                             {% endif %}
 
                             {% for error in field.errors %}
-                              <p style="color: red">{{ error }}</p>
+                                <p style="color: red">{{ error }}</p>
                             {% endfor %}
                         {% endfor %}
 
-                        <button type="submit">Sign up</button><br>
+                        <button type="submit">Sign up</button>
+                        <br>
                         <h1 style="text-align: center">or</h1>
                         <button href="{% url 'login' %}">Login</button>
                     </div>
-                <br>
-                <br>
-                <div class="link">
-                <a href={% url 'register-brand' %}>Register as Brand</a>
-            </div>
+                    <br>
+                    <br>
+                    <div class="link">
+                        <a href={% url 'register-brand' %}>Register as Brand</a>
+                    </div>
                 </legend>
             </fieldset>
 

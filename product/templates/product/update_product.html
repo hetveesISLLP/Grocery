@@ -1,10 +1,16 @@
-<head>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% extends 'product/admin_func.html' %}
+{% load static %}
+{#{% block home %}{% endblock %}#}
 
-</head>
+{#<head>#}
+{#    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">#}
+{##}
+{#</head>#}
+{% block content %}
 <form method="POST">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">Update</button>
 {#    <a href="{% url 'delete-product' product.id %}" class="btn btn-danger">Delete</a>#}
 </form>
+{% endblock %}

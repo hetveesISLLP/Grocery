@@ -7,7 +7,7 @@ from .models import User
 from django.views.generic import ListView
 from django.contrib.auth.models import Group
 from django.views.generic import TemplateView
-from django.views.generic import DetailView
+from django.views.generic.edit import DeleteView
 from django.views.generic.edit import UpdateView
 from .models import Customer
 from django.contrib.auth import update_session_auth_hash
@@ -18,6 +18,13 @@ from django.urls import reverse_lazy
 from django.contrib.auth.views import PasswordChangeView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic.base import View
+
+
+class DeleteProfileView(View):
+    def get(self, request):
+        User.objects.get(username=request.user).delete()
+        messages.success(request, "User deleted successfully")
+        return render(request, 'store/delete_profile.html', {})
 
 
 class ChangePasswordView(SuccessMessageMixin, PasswordChangeView):

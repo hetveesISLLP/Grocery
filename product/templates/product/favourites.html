@@ -32,12 +32,16 @@
     <br>
     <br>
 
-    Your Favourites :
-    {% for all in fav %}
+    {% if fav %}
+        Your Favourites :
+        {% for all in fav %}
 
-        <a class="btn btn-outline-success" href="{% url 'remove-from-favourites' all.brand.id %}">{{ all.brand }}</a>
-    {% endfor %}
-
+            <a class="btn btn-outline-success"
+               href="{% url 'remove-from-favourites' all.brand.id %}">{{ all.brand }}</a>
+        {% endfor %}
+    {% else %}
+        <p>No Favourite Brands yet, Click on Brand you want to add to your Favourites and View their products</p>
+    {% endif %}
 
     <section style="background-color: #eee;">
         <div class="container py-5">
@@ -51,7 +55,8 @@
                                  class="card-img-top" alt="Laptop"/>
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
-                                    <p class="small"><a href="{% url 'add-to-favourites' product.brand.id %}" class="text-muted">{{ product.brand }}</a></p>
+                                    <p class="small"><a href="{% url 'add-to-favourites' product.brand.id %}"
+                                                        class="text-muted">{{ product.brand }}</a></p>
 
                                     <p class="small text-danger">
                                         {% if product.price == product.calculate_discount %}

@@ -20,38 +20,51 @@
 
 
 {% block content %}
+    {% if products %}
 
-    {% for m in messages %}
-        {{ m }}
-    {% endfor %}
-    <div class="container-fluid row">
-        <div class="box-element">
-            <a href="/" class="btn btn-outline-dark">&#x2190 Continue Shopping</a>
-            <br><br>
+        {% for m in messages %}
+            {{ m }}
+        {% endfor %}
+        <div class="container-fluid row">
+            <div class="box-element">
+                <a href="/" class="btn btn-outline-dark">&#x2190 Continue Shopping</a>
+                <br><br>
 
-        </div>
-        {% for item in products %}
-            <div class="col-md-12 col-lg-4 mb-4 mb-lg-0">
-                <br>
-                <div class="card">
-                    <img src="{{ item.product.image.url }}" alt="Denim Jeans" style="width:100%">
-                    <h3>{{ item.product.name }}</h3>
-                    ₹{{ item.product.calculate_discount }}
+            </div>
+            {% for item in products %}
+                <div class="col-md-12 col-lg-4 mb-4 mb-lg-0">
                     <br>
-                    {{ item.product.description }}
+                    <div class="card">
+                        <img src="{{ item.product.image.url }}" alt="Denim Jeans" style="width:100%">
+                        <h3>{{ item.product.name }}</h3>
+                        ₹{{ item.product.calculate_discount }}
+                        <br>
+                        {{ item.product.description }}
 
-                    <div class="d-grid gap-2 d-md-block">
+                        <div class="d-grid gap-2 d-md-block">
+                            <br>
+                            <a href="{% url 'add-to-cart' item.product.id %}" class="btn btn-success" type="button">Add
+                                to
+                                cart</a>
+                            <a href="{% url 'remove-from-wishlist' item.product.id %}" class="btn btn-danger"
+                               type="button">Remove</a>
+                            <br>
+                        </div>
                         <br>
-                        <a href="{% url 'add-to-cart' item.product.id %}" class="btn btn-success" type="button">Add to
-                            cart</a>
-                        <a href="{% url 'remove-from-wishlist' item.product.id %}" class="btn btn-danger" type="button">Remove</a>
-                        <br>
+
                     </div>
                     <br>
-
                 </div>
-                <br>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="container-fluid row">
+            <div class="box-element">
+                <a href="/" class="btn btn-outline-dark">&#x2190 Start Shopping</a>
+                <br><br>
+
             </div>
-        {% endfor %}
-    </div>
+            <p>You have no items in Wishlist</p>
+        </div>
+    {% endif %}
 {% endblock %}

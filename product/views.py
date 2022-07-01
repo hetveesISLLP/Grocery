@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect
 from django.db.models import Q
 from django.contrib import messages
 from django.views.generic.base import View
-from django.views.generic.edit import CreateView, UpdateView,DeleteView
+from django.views.generic.edit import CreateView, UpdateView
 from store.models import Customer
 from django.urls import reverse_lazy
 from django.db.models import Count
@@ -21,10 +21,10 @@ class DownloadInvoice(View):
         order = Order.objects.get(pk=pk)
         invoice = Invoice.objects.filter(order=order)
         context = {
-            'all_orders' : Invoice.objects.filter(order=pk),
+            'all_orders': Invoice.objects.filter(order=pk),
             'order': order,
-            'order_ids' : order.id
-                }
+            'order_ids': order.id
+        }
         pdf = RenderToPdf('product/invoice.html', context)
         if pdf:
             response = HttpResponse(pdf, content_type='application/pdf')
@@ -46,17 +46,21 @@ def RenderToPdf(template_src, context_dict={}):
     return None
 
 
-
 class AddCategory(CreateView):
     model = Category
     fields = ['name']
     template_name = 'product/add_category.html'
     success_url = reverse_lazy('grocery_store_home')
+    category = Category.objects.all()
+    extra_context = {
+        'category': category
+    }
 
 
 class ProductView(View):
     def get(self, request):
-        return render(request, 'product/view_products.html', {'products':Product.objects.filter(brand=self.request.user.brand)})
+        return render(request, 'product/admin_func.html',
+                      {'products': Product.objects.filter(brand=self.request.user.brand)})
 
 
 # class DeleteProductView(DeleteView):
@@ -65,21 +69,20 @@ class ProductView(View):
 #     success_url = reverse_lazy('grocery_store_home')
 
 
-
 class UpdateProductView(UpdateView):
     model = Product
-    fields = ['name', 'price', 'image', 'description', 'available_quantity',  'discount', 'category', 'volume', 'volume_unit']
+    fields = ['name', 'price', 'image', 'description', 'available_quantity', 'discount', 'category', 'volume',
+              'volume_unit']
     template_name = 'product/update_product.html'
-    success_url = reverse_lazy('grocery_store_home')
-
+    success_url = reverse_lazy('view-product')
 
 
 class AddProductView(CreateView):
     model = Product
-    fields = ['name', 'price', 'image', 'description', 'available_quantity',  'discount', 'category', 'volume', 'volume_unit']
+    fields = ['name', 'price', 'image', 'description', 'available_quantity', 'discount', 'category', 'volume',
+              'volume_unit']
     template_name = 'product/add_product.html'
-    success_url = reverse_lazy('grocery_store_home')
-
+    success_url = reverse_lazy('view-product')
 
     def form_valid(self, form):
         form.instance.brand = Brand.objects.get(user=self.request.user)
@@ -87,12 +90,11 @@ class AddProductView(CreateView):
         return super(AddProductView, self).form_valid(form)
 
 
-
 class UpdateBrandName(UpdateView):
     model = Brand
     fields = ['brand']
     template_name = 'product/update_brand_name.html'
-    success_url = reverse_lazy('grocery_store_home')
+    success_url = reverse_lazy('view-product')
 
 
 class OnlyAddress(View):
@@ -138,7 +140,8 @@ class AddAddressView(View):
         available_items = Product.objects.get(pk=pk).available_quantity
         if available_items >= float(quantity):
             items_left = available_items - float(quantity)
-            order = Order.objects.create(customer=customer, address=address, total_amount=Product.objects.get(pk=pk).calculate_discount)
+            order = Order.objects.create(customer=customer, address=address,
+                                         total_amount=Product.objects.get(pk=pk).calculate_discount)
             Invoice.objects.create(order=order, product=product, quantity=quantity)
             number_purchased = Product.objects.get(pk=pk).no_of_purchases
             number_purchased += float(quantity)
@@ -151,10 +154,9 @@ class AddAddressView(View):
             return redirect('grocery_store_home')
 
 
-
 class OrderDetailsView(View):
     def get(self, request, pk):
-        return render(request, 'product/buy_address.html', {'pk':pk})
+        return render(request, 'product/buy_address.html', {'pk': pk})
 
 
 class PurchasedView(View):
@@ -164,23 +166,20 @@ class PurchasedView(View):
         # for i in orders:
         #     items += Invoice.objects.filter(order=i)
 
-        return render(request, 'product/view_purchased.html', {'items':items})
+        return render(request, 'product/view_purchased.html', {'items': items})
+
 
 class DetailPurchasedView(View):
     def get(self, request, pk):
         order = Order.objects.get(pk=pk)
         all_orders = Invoice.objects.filter(order=pk)
-        return render(request, 'product/detail_order.html', {'all_orders':all_orders, 'order':order})
-
-
-
-
+        return render(request, 'product/detail_order.html', {'all_orders': all_orders, 'order': order})
 
 
 class FilterProduct(View):
     def get(self, request):
         min_val = request.GET.get('min_val') if request.GET.get('min_val') != '' else \
-        Product.objects.order_by('price').values_list('price', flat=True)[0]
+            Product.objects.order_by('price').values_list('price', flat=True)[0]
 
         # values() --> Dictionary --> < QuerySet[{'comment_id': 1}, {'comment_id': 2}] >
         # values_list() --> Tuples --> < QuerySet[(1,), (2,)] >
@@ -196,7 +195,7 @@ class FilterProduct(View):
         # print(Product.objects.order_by('-price').values_list('price', flat=True)[0])
 
         max_val = request.GET.get('max_val') if request.GET.get('max_val') != '' else \
-        Product.objects.order_by('-price').values_list('price', flat=True)[0]
+            Product.objects.order_by('-price').values_list('price', flat=True)[0]
         products = Product.objects.filter(price__gte=float(min_val), price__lte=float(max_val))
         return render(request, 'product/filter_result.html', {'products': products})
 
@@ -350,8 +349,8 @@ class CartView(ListView):
 class HomeView(View):
     def get(self, request):
         if request.user.is_staff and not request.user.is_superuser:
-            brand = Brand.objects.get(user=request.user)
-            return render(request,'product/admin_func.html', {'brand':brand})
+            products = Product.objects.filter(brand=self.request.user.brand)
+            return render(request, 'product/admin_func.html', {'products': products})
         elif request.user.is_superuser:
             return redirect('admin:index')
         else:

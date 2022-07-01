@@ -1,4 +1,4 @@
-from . views import register, registerbrand, FeedbackView, ChangePasswordView, AboutView, profile
+from . views import register, registerbrand, FeedbackView, ChangePasswordView, AboutView, profile, DeleteProfileView
 from django.urls import path
 from product.views import HomeView
 from django.contrib.auth import views as auth_views
@@ -15,6 +15,8 @@ urlpatterns = [
     path('home/', HomeView.as_view(), name="grocery_store_home"),
     path('logout/', auth_views.LogoutView.as_view(template_name='store/logout.html'), name='logout-user'),
     path('profile/', profile, name='user-profile'),
+    path('delete_profile/', DeleteProfileView.as_view(), name='delete-profile'),
+
     path('password_reset/',
          auth_views.PasswordResetView.as_view(template_name='store/password_reset.html'),
          name='password_reset'),
