@@ -17,6 +17,7 @@
 
 {% block content %}
     <form action="{% url 'checkout-address' %}" method="POST">
+{#    <form action="{% url 'view-checkout' %}" method="POST">#}
         {% csrf_token %}
         <label for="address-buy">Add Your Address here : </label>
         <textarea id="address-buy" name="address-buy" rows="10" cols="50" required></textarea>

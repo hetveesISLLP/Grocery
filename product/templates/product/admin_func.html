@@ -5,7 +5,7 @@
 <head>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-{#    <link rel="stylesheet" type="text/css" href="{% static 'product/css/description.css' %}">#}
+    {#    <link rel="stylesheet" type="text/css" href="{% static 'product/css/description.css' %}">#}
     <link rel="stylesheet" type="text/css" href="{% static 'product/css/home.css' %}">
 </head>
 <body>
@@ -15,9 +15,7 @@
 
     <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
-            {#            <li class="nav-item">#}
-            {#                <a class="nav-link" href="#">Features</a>#}
-            {#            </li>#}
+
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'update-brand_name' user.brand.id %}">Update Brand</a>
             </li>
@@ -27,14 +25,19 @@
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'add-category' %}">Add Category</a>
             </li>
+
+
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'view-order' %}">View Orders</a>
+            </li>
+
+
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'logout-user' %}">Logout</a>
             </li>
         </ul>
     </div>
 </nav>
-
-
 
 
 {#    <link rel="preconnect" href="https://fonts.gstatic.com">#}
@@ -47,56 +50,56 @@
 
 
 {% block content %}
-<section style="background-color: #eee;">
-    <div class="container py-2">
-    <h1>{{ user.brand }} Products</h1>
-        <div class="row">
 
-            {% for product in products %}
-                <div class="col-md-12 col-lg-4 mb-4 mb-lg-0">
-                    <div class="card mb-4">
-                        <div class="d-flex justify-content-between p-3">
-                        </div>
-                        <img src="{{ product.image.url }}"
-                             class="card-img-top" alt="{{ product.name }}"/>
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between">
-                                <p class="small">{{ product.brand }}</p>
-                                <p class="small text-danger">
-                                    {% if product.price == product.calculate_discount %}
-                                        <i>₹{{ product.price }}</i>
-                                    {% else %}
-                                        <s>₹{{ product.price }}</s>
-                                        <i><b>({{ product.discount }}% Off)</b></i>
-                                    {% endif %}
-                                </p>
-                            </div>
+    <section style="background-color: #eee;">
+        <div class="container py-2">
+            <h1>{{ user.brand }} Products</h1>
+            <div class="row">
 
-                            <div class="d-flex justify-content-between mb-3">
-                                <h4><a href="{% url 'update-product' product.id %}"
-                                       class="mb-0">{{ product.name }}</a></h4>
-                                <h5 class="text-dark mb-0">₹{{ product.calculate_discount }}</h5>
+                {% for product in products %}
+                    <div class="col-md-12 col-lg-4 mb-4 mb-lg-0">
+                        <div class="card mb-4">
+                            <div class="d-flex justify-content-between p-3">
                             </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <p class="text-muted mb-0">Available:
-                                    <span class="fw-bold">{{ product.available_quantity }}</span>
-                                </p>
+                            <img src="{{ product.image.url }}"
+                                 class="card-img-top" alt="{{ product.name }}"/>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <p class="small">{{ product.brand }}</p>
+                                    <p class="small text-danger">
+                                        {% if product.price == product.calculate_discount %}
+                                            <i>₹{{ product.price }}</i>
+                                        {% else %}
+                                            <s>₹{{ product.price }}</s>
+                                            <i><b>({{ product.discount }}% Off)</b></i>
+                                        {% endif %}
+                                    </p>
+                                </div>
+
                                 <div class="d-flex justify-content-between mb-3">
-                                    <h6 class="text mb-0">{{ product.volume }} {{ product.volume_unit }}</h6>
+                                    <h4><a href="{% url 'update-product' product.id %}"
+                                           class="mb-0">{{ product.name }}</a></h4>
+                                    <h5 class="text-dark mb-0">₹{{ product.calculate_discount }}</h5>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <p class="text-muted mb-0">Available:
+                                        <span class="fw-bold">{{ product.available_quantity }}</span>
+                                    </p>
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <h6 class="text mb-0">{{ product.volume }} {{ product.volume_unit }}</h6>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            {% endfor %}
+                {% endfor %}
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 {% endblock %}
 
 </body>
 </html>
-
 
 
 {#<a href="{% url 'view-product' %}">View/Update Product</a>#}

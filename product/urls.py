@@ -3,7 +3,9 @@ from .views import DetailProductView, SearchProduct, CartView, AddToCart, WishLi
     RemoveFromWishList, RemoveFromCart, UpdateCart, AddToFavourites, FavouriteView, RemoveFromFavourites, \
     AddReviewView, CategoryView, FilterProduct,OrderDetailsView, AddAddressView, PurchasedView, OnlyAddress, \
     AddAddressOnlyView, AddCategory, UpdateBrandName, AddProductView, ProductView, UpdateProductView, \
-    DetailPurchasedView, DownloadInvoice
+    DetailPurchasedView, DownloadInvoice, ViewOrdersVendor, UpdateOrderStatus, StripePaymentView, CreateCheckoutSession, \
+    ViewCheckout, FailureView, SuccessView
+    # UpdateOrderStatusOverall
 
 
 
@@ -43,6 +45,21 @@ urlpatterns = [
     path('', ProductView.as_view(), name='view-product'),
     path('update_product/<int:pk>/', UpdateProductView.as_view(), name='update-product'),
 
-    path('download_invoice/<int:pk>/', DownloadInvoice.as_view(), name="download-invoice")
+    path('download_invoice/<int:pk>/', DownloadInvoice.as_view(), name="download-invoice"),
+
+    path('view_orders/', ViewOrdersVendor.as_view(), name="view-order"),
+
+    path('update_order_status/<int:pk>/', UpdateOrderStatus.as_view(), name="update-product-status"),
+
+    # path('update-order-status/<int:pk>/', UpdateOrderStatusOverall.as_view(), name="update-order-status"),
+
+    path('create_session/', CreateCheckoutSession.as_view(), name='create-session'),
+
+    path('create_payment_intent/<int:pk>/', StripePaymentView.as_view(), name="create-payment-intent"),
+
+    path('view_checkout/', ViewCheckout.as_view(), name='view-checkout'),
+    path('success/', SuccessView.as_view(), name='success'),
+    path('failure/', FailureView.as_view(), name='failure'),
+
 
 ]

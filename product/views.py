@@ -1,5 +1,5 @@
 from .models import Product, Cart, WishList, Brand, Favourites, Review, Category, Order, Invoice
-from django.views.generic import ListView
+from django.views.generic import ListView, TemplateView
 from django.views.generic.detail import DetailView
 from django.shortcuts import render, redirect
 from django.db.models import Q
@@ -14,13 +14,121 @@ from xhtml2pdf import pisa
 from django.http import HttpResponse
 from django.template.loader import get_template
 
+import stripe
+from django.http import JsonResponse
+from django.conf import settings
+
+stripe.api_key = 'sk_test_51LGcerSBrStSbNNxHd8IMfYJULu1SZ0QhBJViYUcKPOPRo7qr12w9wOH93rqhy00OZHd0P321jijOOOr4sMqhWq000VDho2bON'
+
+
+class SuccessView(TemplateView):
+    template_name = 'product/success_payment.html'
+
+
+class FailureView(TemplateView):
+    template_name = 'product/failure_payment.html'
+
+
+class ViewCheckout(TemplateView):
+    template_name = 'product/view_checkout.html'
+
+
+
+class CreateCheckoutSession(View):
+    def post(self, request, *args, **kwargs):
+        product_id = self.kwargs['pk']
+        product = Product.objects.get(pk=product_id)
+
+        session = stripe.checkout.Session.create(
+            # payment_method_types=['Card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'unit_amount': product.calculate_discount,
+                    'product_data': {
+                        'name': product.name,
+                    },
+                },
+                # 'quantity': product.quantity,
+            }],
+            mode='payment',
+            success_url='http:127.0.0.0.1:8000/success',
+            cancel_url='http:127.0.0.0.1:8000/cancel',
+        )
+        return JsonResponse({
+            'id': session.id
+        })
+
+
+
+
+class StripePaymentView(View):
+    def post(self, request, *args, **kwargs):
+        try:
+            product_id = self.kwargs['pk']
+            product = Product.objects.get(pk=product_id)
+            # Create a PaymentIntent with the order amount and currency
+            intent = stripe.PaymentIntent.create(
+                amount=product.calculate_discount,
+
+                currency='inr',
+                automatic_payment_methods={
+                    'enabled': True,
+                },
+            )
+            return JsonResponse({
+                'clientSecret': intent['client_secret']
+            })
+        except Exception as e:
+            return JsonResponse({'err': str(e)})
+
+
+# class UpdateOrderStatusOverall(View):
+#     def get(self, request, pk):
+#         products = Invoice.objects.filter(order=pk)
+#
+#         if products:
+#             status = products[0].status
+#             for i in products:
+#                 if i.status == status:
+#                     pass
+#                 # else:
+#                 #
+#             else:
+#                 order = Order.objects.get(pk=pk)
+#                 order.status = status
+#                 order.save()
+#
+#
+#         return redirect('view-order')
+
+
+'''For updating the status of the products'''
+
+
+class UpdateOrderStatus(UpdateView):
+    model = Invoice
+    fields = ['status']
+    template_name = 'product/update_order_status.html'
+    success_url = reverse_lazy('view-order')
+
+
+'''For viewing the orders of the brand of the vendor'''
+
+
+class ViewOrdersVendor(View):
+    def get(self, request):
+        invoice = Invoice.objects.filter(product__brand=self.request.user.brand)
+        return render(request, 'product/view_order_vendor.html', {'invoice': invoice})
+
 
 class DownloadInvoice(View):
-    def get(selfself, request, pk):
+    def get(self, request, pk):
         # template = get_template('product/detail_order.html')
         order = Order.objects.get(pk=pk)
         invoice = Invoice.objects.filter(order=order)
         context = {
+
             'all_orders': Invoice.objects.filter(order=pk),
             'order': order,
             'order_ids': order.id
@@ -46,6 +154,9 @@ def RenderToPdf(template_src, context_dict={}):
     return None
 
 
+'''For adding the category'''
+
+
 class AddCategory(CreateView):
     model = Category
     fields = ['name']
@@ -69,12 +180,18 @@ class ProductView(View):
 #     success_url = reverse_lazy('grocery_store_home')
 
 
+'''For updating the product'''
+
+
 class UpdateProductView(UpdateView):
     model = Product
     fields = ['name', 'price', 'image', 'description', 'available_quantity', 'discount', 'category', 'volume',
               'volume_unit']
     template_name = 'product/update_product.html'
     success_url = reverse_lazy('view-product')
+
+
+'''For adding the product'''
 
 
 class AddProductView(CreateView):
@@ -84,10 +201,15 @@ class AddProductView(CreateView):
     template_name = 'product/add_product.html'
     success_url = reverse_lazy('view-product')
 
+    '''for setting the brand of product'''
+
     def form_valid(self, form):
         form.instance.brand = Brand.objects.get(user=self.request.user)
         form.instance.no_of_purchases = 0
         return super(AddProductView, self).form_valid(form)
+
+
+'''For updating the brand name'''
 
 
 class UpdateBrandName(UpdateView):
@@ -102,6 +224,9 @@ class OnlyAddress(View):
         return render(request, 'product/only_address.html', {})
 
 
+'''For getting the address, quantity for order from the cart'''
+
+
 class AddAddressOnlyView(View):
     def post(self, request):
         customer = Customer.objects.get(user=self.request.user)
@@ -110,6 +235,7 @@ class AddAddressOnlyView(View):
         total_amount = 0
         invoices = []
 
+        '''for checking the quantity'''
         for i in cart_products:
             if i.product.available_quantity >= i.quantity:
                 product = i
@@ -131,6 +257,9 @@ class AddAddressOnlyView(View):
         return redirect('grocery_store_home')
 
 
+'''For getting the address, quantity for the single item order'''
+
+
 class AddAddressView(View):
     def post(self, request, pk):
         customer = Customer.objects.get(user=self.request.user)
@@ -138,6 +267,8 @@ class AddAddressView(View):
         address = self.request.POST.get('address-buy')
         quantity = self.request.POST.get('quantityy')
         available_items = Product.objects.get(pk=pk).available_quantity
+
+        '''for checking the quantity'''
         if available_items >= float(quantity):
             items_left = available_items - float(quantity)
             order = Order.objects.create(customer=customer, address=address,
@@ -159,6 +290,9 @@ class OrderDetailsView(View):
         return render(request, 'product/buy_address.html', {'pk': pk})
 
 
+'''For viewing the order details'''
+
+
 class PurchasedView(View):
     def get(self, request):
         items = Order.objects.filter(customer=Customer.objects.get(user=self.request.user))
@@ -169,11 +303,17 @@ class PurchasedView(View):
         return render(request, 'product/view_purchased.html', {'items': items})
 
 
+'''For viewing the details of the purchased products'''
+
+
 class DetailPurchasedView(View):
     def get(self, request, pk):
         order = Order.objects.get(pk=pk)
         all_orders = Invoice.objects.filter(order=pk)
         return render(request, 'product/detail_order.html', {'all_orders': all_orders, 'order': order})
+
+
+'''For filtering the product based on min and max price'''
 
 
 class FilterProduct(View):
@@ -200,11 +340,17 @@ class FilterProduct(View):
         return render(request, 'product/filter_result.html', {'products': products})
 
 
+'''For viewing products of the specified category'''
+
+
 class CategoryView(ListView):
     def get(self, request, category):
         # category = self.request.POST.get('category')
         products = Product.objects.filter(category=Category.objects.get(name=category))
         return render(request, 'product/filter_result.html', {'products': products, 'category': Category.objects.all()})
+
+
+'''For adding the review to the product'''
 
 
 class AddReviewView(View):
@@ -215,6 +361,9 @@ class AddReviewView(View):
         Review.objects.create(customer=customer, review=review, product=product)
         messages.success(request, "Review added successfully")
         return redirect('product-detail', pk=pk)
+
+
+'''For viewing all the products of the favourite brand'''
 
 
 class FavouriteView(View):
@@ -235,6 +384,9 @@ class FavouriteView(View):
             return render(request, 'product/favourites.html', {'all_brands': all_brands, })
 
 
+'''For removing brand from the favourites'''
+
+
 class RemoveFromFavourites(View):
     def get(self, request, pk):
         brand = Brand.objects.get(pk=pk)
@@ -242,6 +394,9 @@ class RemoveFromFavourites(View):
         Favourites.objects.filter(customer=customer, brand=brand).delete()
         messages.success(request, "Brand removed from Favourites.")
         return redirect('favourites')
+
+
+'''For adding brand to the Favourites if not already exists'''
 
 
 class AddToFavourites(View):
@@ -258,6 +413,9 @@ class AddToFavourites(View):
             return redirect('favourites')
 
 
+'''For removing product from the Wishlist'''
+
+
 class RemoveFromWishList(View):
     def get(self, request, pk):
         product = Product.objects.get(pk=pk)
@@ -267,6 +425,9 @@ class RemoveFromWishList(View):
         return redirect('wishlist')
 
 
+'''For removing product from the Cart'''
+
+
 class RemoveFromCart(View):
     def get(self, request, pk):
         product = Product.objects.get(pk=pk)
@@ -274,6 +435,9 @@ class RemoveFromCart(View):
         Cart.objects.filter(customer=customer, product=product).delete()
         messages.success(request, "Item removed from Cart.")
         return redirect('cart')
+
+
+'''For adding product to the wishlist if not already exists'''
 
 
 class AddToWishList(View):
@@ -290,6 +454,9 @@ class AddToWishList(View):
             return redirect('wishlist')
 
 
+'''For viewing products that are present in the wishlist'''
+
+
 class WishListView(ListView):
     template_name = 'product/wishlist.html'
     context_object_name = 'products'
@@ -297,6 +464,9 @@ class WishListView(ListView):
     def get_queryset(self):
         products = WishList.objects.filter(customer=Customer.objects.get(user=self.request.user))
         return products
+
+
+'''For adding a product to the cart if not already exists'''
 
 
 class AddToCart(View):
@@ -314,6 +484,9 @@ class AddToCart(View):
             return redirect('cart')
 
 
+'''For updating the Cart'''
+
+
 class UpdateCart(View):
     def post(self, request, pk):
         product = Product.objects.get(pk=pk)
@@ -322,6 +495,9 @@ class UpdateCart(View):
         cart.quantity = self.request.POST.get('quantity')
         cart.save()
         return redirect('cart')
+
+
+'''For viewing items in the cart'''
 
 
 class CartView(ListView):
@@ -375,8 +551,14 @@ class HomeView(View):
                           {'products': products, 'category': category, 'all_products': all_products})
 
 
+'''Showing the details of each product'''
+
+
 class DetailProductView(DetailView):
     model = Product
+
+
+'''For searching a product based on name, description, brand, category'''
 
 
 class SearchProduct(View):

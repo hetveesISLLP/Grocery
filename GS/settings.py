@@ -173,3 +173,4 @@ django_on_heroku.settings(locals())
 
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEYS')
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEYS')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')

@@ -4,6 +4,7 @@ from store.models import Customer, Brand
 from django.db.models.fields import IntegerField
 import math
 
+
 class Category(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
@@ -80,24 +81,36 @@ payment_choices = (
     ("UPI", "UPI")
 )
 
+status_choices = [
+    ("Initialized", "Initialized"),
+    ("Packed", "Packed"),
+    ("Shipped", "Shipped"),
+    ("Reached Distribution Centre", "Reached Distribution Centre"),
+    ("Delivered", "Delivered")
+]
+
 
 class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    #todo : product, quantity
 
-    #check for Invoice. No need
+
+    # check for Invoice. No need
     address = models.TextField(max_length=200)
     datetime = models.DateTimeField(auto_now_add=True)
     payment_method = models.CharField(max_length=30, choices=payment_choices, default='Cash On Delivery')
     total_amount = models.FloatField()
+    status = models.CharField(max_length=30, choices=status_choices, default="Initialized")
 
 
 class Invoice(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     quantity = models.IntegerField()
+    # packed = models.BooleanField(default=0, null=True)
+    # shipped = models.BooleanField(default=0, null=True)
+    # delivered = models.BooleanField(default=0, null=True)
+    status = models.CharField(max_length=30, choices=status_choices, default="Initialized")
 
     @property
     def total_price(self):
         return "{:.2f}".format(float(self.product.calculate_discount) * float(self.quantity))
-
