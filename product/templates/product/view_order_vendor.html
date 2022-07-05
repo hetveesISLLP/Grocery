@@ -21,7 +21,7 @@
 {#                    <div style="flex: 1;"><strong>Packed</strong></div>#}
 {#                    <div style="flex: 1;"><strong>Shipped</strong></div>#}
                     <div style="flex: 1;"><strong>Product Status</strong></div>
-                    <div style="flex: 1;"><strong>Order Status</strong></div>
+{#                    <div style="flex: 1;"><strong>Order Status</strong></div>#}
                 </div>
 
                 {% for item in invoice %}
@@ -40,7 +40,7 @@
 {#                        <div style="flex: 1;">{{ item.shipped }}</div>#}
                         <div style="flex: 1;">{{ item.product.calculate_discount }}</div>
                         <div style="flex: 1;">{{ item.status }}</div>
-                        <div style="flex: 1;">{{ item.order.status }}</div>
+{#                        <div style="flex: 1;">{{ item.order.status }}</div>#}
                         </div>
 
 

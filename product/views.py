@@ -1,28 +1,28 @@
 from .models import Product, Cart, WishList, Brand, Favourites, Review, Category, Order, Invoice
 from django.views.generic import ListView, TemplateView
 from django.views.generic.detail import DetailView
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from django.contrib import messages
 from django.views.generic.base import View
 from django.views.generic.edit import CreateView, UpdateView
 from store.models import Customer
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
+from django.http import HttpResponseNotFound
 from django.db.models import Count
 from io import BytesIO
 from xhtml2pdf import pisa
 from django.http import HttpResponse
 from django.template.loader import get_template
-
+from django.utils.decorators import method_decorator
 import stripe
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
+import json
+import math
 
 stripe.api_key = 'sk_test_51LGcerSBrStSbNNxHd8IMfYJULu1SZ0QhBJViYUcKPOPRo7qr12w9wOH93rqhy00OZHd0P321jijOOOr4sMqhWq000VDho2bON'
-
-
-class SuccessView(TemplateView):
-    template_name = 'product/success_payment.html'
 
 
 class FailureView(TemplateView):
@@ -33,74 +33,163 @@ class ViewCheckout(TemplateView):
     template_name = 'product/view_checkout.html'
 
 
+# class CreateCheckoutSessionCart(View):
+#     @method_decorator(csrf_exempt)
+#     def post(self, request, pk):
+#         customer = Customer.objects.get(user=self.request.user)
+#         cart_products = Cart.objects.filter(customer=customer)
+#
+#         detail = request.body.decode('utf-8')
+#         body = json.loads(detail)
+#         address = body['address-buy']
+#         total_amount = 0
+#         invoices = []
+#
+#         '''for checking the quantity'''
+#         for i in cart_products:
+#             if i.product.available_quantity >= i.quantity:
+#                 product = i
+#                 i.product.available_quantity -= i.quantity
+#                 i.product.no_of_purchases += i.quantity
+#                 i.product.save()
+#                 total_amount += float(product.product.calculate_discount) * product.quantity
+#                 invoices.append(Invoice(product=product.product, quantity=product.quantity))
+#             else:
+#                 break
+#         else:
+#             # order = Order.objects.create(customer=customer, address=address, total_amount=0)
+#             # for i in invoices:
+#             #     i.order = order
+#             #     i.save()
+#             # Order.objects.filter(customer=customer, address=address, total_amount=0).update(total_amount=total_amount)
+#             # Cart.objects.filter(customer=customer).delete()
+#
+#             stripe.api_key = settings.STRIPE_SECRET_KEY
+#             session = stripe.checkout.Session.create(
+#                 payment_method_types=['card'],
+#                 line_items=[{
+#                     'price_data': {
+#                         'currency': 'inr',
+#                         'unit_amount': int(float(product.calculate_discount) * 100),
+#                         'product_data': {
+#                             'name': product.name
+#                         },
+#                     },
+#                     'quantity': quantity
+#                 }],
+#                 mode='payment',
+#                 success_url=request.build_absolute_uri(reverse('success')) + "?session_id={CHECKOUT_SESSION_ID}",
+#                 cancel_url=request.build_absolute_uri(reverse('failure')),
+#
+#             )
+#
+#             order = Order()
+#             order.customer = customer
+#             order.stripe_payment_intent = session['payment_intent']
+#             order.total_amount = int(float(product.calculate_discount)) * int(quantity)
+#             order.address = address
+#             order.save()
+#
+#             invoice = Invoice()
+#             invoice.order = order
+#             invoice.product = product
+#             invoice.quantity = quantity
+#             invoice.save()
+#
+#             product.available_quantity = items_left
+#             product.no_of_purchases = number_purchased
+#             product.save()
+#
+#             return JsonResponse({'sessionId': session.id})
+#         else:
+#             messages.error(request, "Item not available in that quantity")
+#             return JsonResponse({'message': False})
+
+
+
+
+
+
+
+class PaymentSuccessView(View):
+    template_name = "product/success_payment.html"
+
+    def get(self, request, *args, **kwargs):
+        session_id = request.GET.get('session_id')
+        if session_id is None:
+            return HttpResponseNotFound()
+
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        session = stripe.checkout.Session.retrieve(session_id)
+
+        order = get_object_or_404(Order, stripe_payment_intent=session.payment_intent)
+        order.has_paid = True
+        order.save()
+
+        return render(request, self.template_name)
+
+
+''' This view serves as an API to initialize the payment gateway.'''
+
 
 class CreateCheckoutSession(View):
-    def post(self, request, *args, **kwargs):
-        product_id = self.kwargs['pk']
-        product = Product.objects.get(pk=product_id)
+    @method_decorator(csrf_exempt)
+    def post(self, request, pk):
+        customer = Customer.objects.get(user=self.request.user)
+        product = Product.objects.get(pk=pk)
 
-        session = stripe.checkout.Session.create(
-            # payment_method_types=['Card'],
-            line_items=[{
-                'price_data': {
-                    'currency': 'usd',
-                    'unit_amount': product.calculate_discount,
-                    'product_data': {
-                        'name': product.name,
+        detail = request.body.decode('utf-8')
+        body = json.loads(detail)
+
+        available_items = Product.objects.get(pk=pk).available_quantity
+        number_purchased = Product.objects.get(pk=pk).no_of_purchases
+        address = body['address-buy']
+        quantity = body['quantityy']
+        '''for checking the quantity'''
+        if available_items >= float(quantity):
+            items_left = available_items - float(quantity)
+            number_purchased += float(quantity)
+            stripe.api_key = settings.STRIPE_SECRET_KEY
+            session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                line_items=[{
+                    'price_data': {
+                        'currency': 'inr',
+                        'unit_amount': int(float(product.calculate_discount) * 100),
+                        'product_data': {
+                            'name': product.name
+                        },
                     },
-                },
-                # 'quantity': product.quantity,
-            }],
-            mode='payment',
-            success_url='http:127.0.0.0.1:8000/success',
-            cancel_url='http:127.0.0.0.1:8000/cancel',
-        )
-        return JsonResponse({
-            'id': session.id
-        })
+                    'quantity': quantity
+                }],
+                mode='payment',
+                success_url=request.build_absolute_uri(reverse('success')) + "?session_id={CHECKOUT_SESSION_ID}",
+                cancel_url=request.build_absolute_uri(reverse('failure')),
 
-
-
-
-class StripePaymentView(View):
-    def post(self, request, *args, **kwargs):
-        try:
-            product_id = self.kwargs['pk']
-            product = Product.objects.get(pk=product_id)
-            # Create a PaymentIntent with the order amount and currency
-            intent = stripe.PaymentIntent.create(
-                amount=product.calculate_discount,
-
-                currency='inr',
-                automatic_payment_methods={
-                    'enabled': True,
-                },
             )
-            return JsonResponse({
-                'clientSecret': intent['client_secret']
-            })
-        except Exception as e:
-            return JsonResponse({'err': str(e)})
 
+            order = Order()
+            order.customer = customer
+            order.stripe_payment_intent = session['payment_intent']
+            order.total_amount = int(float(product.calculate_discount)) * int(quantity)
+            order.address = address
+            order.save()
 
-# class UpdateOrderStatusOverall(View):
-#     def get(self, request, pk):
-#         products = Invoice.objects.filter(order=pk)
-#
-#         if products:
-#             status = products[0].status
-#             for i in products:
-#                 if i.status == status:
-#                     pass
-#                 # else:
-#                 #
-#             else:
-#                 order = Order.objects.get(pk=pk)
-#                 order.status = status
-#                 order.save()
-#
-#
-#         return redirect('view-order')
+            invoice = Invoice()
+            invoice.order = order
+            invoice.product = product
+            invoice.quantity = quantity
+            invoice.save()
+
+            product.available_quantity = items_left
+            product.no_of_purchases = number_purchased
+            product.save()
+
+            return JsonResponse({'sessionId': session.id})
+        else:
+            messages.error(request, "Item not available in that quantity")
+            return JsonResponse({'message': False})
+
 
 
 '''For updating the status of the products'''
@@ -287,7 +376,8 @@ class AddAddressView(View):
 
 class OrderDetailsView(View):
     def get(self, request, pk):
-        return render(request, 'product/buy_address.html', {'pk': pk})
+        return render(request, 'product/buy_address.html',
+                      {'pk': pk, 'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY})
 
 
 '''For viewing the order details'''

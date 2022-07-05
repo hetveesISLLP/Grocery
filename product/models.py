@@ -99,7 +99,9 @@ class Order(models.Model):
     datetime = models.DateTimeField(auto_now_add=True)
     payment_method = models.CharField(max_length=30, choices=payment_choices, default='Cash On Delivery')
     total_amount = models.FloatField()
-    status = models.CharField(max_length=30, choices=status_choices, default="Initialized")
+    # status = models.CharField(max_length=30, choices=status_choices, default="Initialized")
+    stripe_payment_intent = models.CharField(max_length=200, null=True)
+    has_paid = models.BooleanField(default=False)
 
 
 class Invoice(models.Model):

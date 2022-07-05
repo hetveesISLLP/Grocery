@@ -1,12 +1,12 @@
 from django.urls import path
 from .views import DetailProductView, SearchProduct, CartView, AddToCart, WishListView, AddToWishList, \
     RemoveFromWishList, RemoveFromCart, UpdateCart, AddToFavourites, FavouriteView, RemoveFromFavourites, \
-    AddReviewView, CategoryView, FilterProduct,OrderDetailsView, AddAddressView, PurchasedView, OnlyAddress, \
+    AddReviewView, CategoryView, FilterProduct, OrderDetailsView, AddAddressView, PurchasedView, OnlyAddress, \
     AddAddressOnlyView, AddCategory, UpdateBrandName, AddProductView, ProductView, UpdateProductView, \
-    DetailPurchasedView, DownloadInvoice, ViewOrdersVendor, UpdateOrderStatus, StripePaymentView, CreateCheckoutSession, \
-    ViewCheckout, FailureView, SuccessView
-    # UpdateOrderStatusOverall
+    DetailPurchasedView, DownloadInvoice, ViewOrdersVendor, UpdateOrderStatus, \
+    ViewCheckout, FailureView, CreateCheckoutSession, PaymentSuccessView
 
+# UpdateOrderStatusOverall
 
 
 urlpatterns = [
@@ -31,13 +31,10 @@ urlpatterns = [
     path('category/<str:category>/', CategoryView.as_view(), name='view-category'),
     path('filter/', FilterProduct.as_view(), name='price-filter'),
 
-    path('<int:pk>/add_address/', AddAddressView.as_view(), name='buy-address'),
-    path('<int:pk>/buy_now/', OrderDetailsView.as_view(), name='buy-now'),
+    # path('<int:pk>/add_address/', AddAddressView.as_view(), name='buy-address'),
+    # path('<int:pk>/buy_now/', OrderDetailsView.as_view(), name='buy-now'),
     path('orders/', PurchasedView.as_view(), name='orders'),
     path('orders/<int:pk>/', DetailPurchasedView.as_view(), name='detail-orders'),
-
-    path('checkout/', OnlyAddress.as_view(), name='buy-now-cart'),
-    path('checkout/address', AddAddressOnlyView.as_view(), name='checkout-address'),
 
     path('add_category/', AddCategory.as_view(), name="add-category"),
     path('update_brand/<int:pk>/', UpdateBrandName.as_view(), name="update-brand_name"),
@@ -55,11 +52,14 @@ urlpatterns = [
 
     path('create_session/', CreateCheckoutSession.as_view(), name='create-session'),
 
-    path('create_payment_intent/<int:pk>/', StripePaymentView.as_view(), name="create-payment-intent"),
-
     path('view_checkout/', ViewCheckout.as_view(), name='view-checkout'),
-    path('success/', SuccessView.as_view(), name='success'),
+    path('success/', PaymentSuccessView.as_view(), name='success'),
     path('failure/', FailureView.as_view(), name='failure'),
 
+    path('<int:pk>/buy_now/', OrderDetailsView.as_view(), name='buy-now'),
+    path('api/checkout-session/<int:pk>/', CreateCheckoutSession.as_view(), name='api_checkout_session'),
+
+    path('checkout/', OnlyAddress.as_view(), name='buy-now-cart'),
+    path('checkout/address<int:pk>/', AddAddressOnlyView.as_view(), name='checkout-address'),
 
 ]
