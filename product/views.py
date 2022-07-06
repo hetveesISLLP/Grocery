@@ -30,18 +30,22 @@ class FailureView(TemplateView):
 
 
 class ViewCheckout(TemplateView):
+    '''Redirects to view_checout.html page'''
     template_name = 'product/view_checkout.html'
 
 
 class PaymentSuccessViewCart(View):
+    '''Redirect to success_payment.html page'''
     template_name = "product/success_payment.html"
 
+    '''To get the session id '''
     def get(self, request, *args, **kwargs):
         session_id = request.GET.get('session_id')
         if session_id is None:
             return HttpResponseNotFound()
 
         stripe.api_key = settings.STRIPE_SECRET_KEY
+        '''retreives session id'''
         session = stripe.checkout.Session.retrieve(session_id)
 
         customer = Customer.objects.get(user=request.user)
@@ -77,8 +81,11 @@ class CreateCheckoutSessionCart(View):
         customer = Customer.objects.get(user=self.request.user)
         cart_products = Cart.objects.filter(customer=customer)
 
+        '''json.loads() will only accept a unicode string, so you must decode request.body before json.loads()'''
         detail = request.body.decode('utf-8')
+        '''get all data from json'''
         body = json.loads(detail)
+        '''get address from the body'''
         address = body['address-buy']
 
         '''for checking the quantity'''
@@ -89,12 +96,13 @@ class CreateCheckoutSessionCart(View):
                 messages.error(request, "Item not available in that quantity")
                 return JsonResponse({'message': False})
         else:
+            '''For viewing items on the checkout page with this format'''
             lis = []
             for cproduct in cart_products:
                 lis.append({
                     'price_data': {
                         'currency': 'inr',
-                        'unit_amount': int(float(cproduct.product.calculate_discount)*100),
+                        'unit_amount': int(float(cproduct.product.calculate_discount) * 100),
                         'product_data':
                             {
                                 'name': cproduct.product.name
@@ -104,11 +112,14 @@ class CreateCheckoutSessionCart(View):
                 })
 
             stripe.api_key = settings.STRIPE_SECRET_KEY
+
+            '''creating a checkout session with payment_method = card'''
             session = stripe.checkout.Session.create(
                 payment_method_types=['card'],
                 line_items=lis,
                 mode='payment',
-                success_url=request.build_absolute_uri(reverse('success-cart')) + "?session_id={CHECKOUT_SESSION_ID}&address="+address,
+                success_url=request.build_absolute_uri(
+                    reverse('success-cart')) + "?session_id={CHECKOUT_SESSION_ID}&address=" + address,
                 cancel_url=request.build_absolute_uri(reverse('failure')),
             )
 
@@ -186,14 +197,14 @@ class CreateCheckoutSession(View):
                     'quantity': quantity
                 }],
                 mode='payment',
-                success_url=request.build_absolute_uri(reverse('success')) + "?session_id={CHECKOUT_SESSION_ID}&address="+address+"&quantity="+str(quantity)+"&product="+str(pk),
+                success_url=request.build_absolute_uri(
+                    reverse('success')) + "?session_id={CHECKOUT_SESSION_ID}&address=" + address + "&quantity=" + str(
+                    quantity) + "&product=" + str(pk),
                 cancel_url=request.build_absolute_uri(reverse('failure')),
 
             )
 
             Order.objects.create(customer=customer, stripe_payment_intent=session['payment_intent'], total_amount=0)
-
-
 
             return JsonResponse({'sessionId': session.id})
         else:
@@ -206,9 +217,30 @@ class CreateCheckoutSession(View):
 
 class UpdateOrderStatus(UpdateView):
     model = Invoice
+    # invoice = Invoice.objects.get()
+    # print(invoice.status)
+    # if Invoice.status == 'Delivered':
     fields = ['status']
     template_name = 'product/update_order_status.html'
     success_url = reverse_lazy('view-order')
+
+    def get(self, request, *args, **kwargs):
+        object = self.get_object()
+        # invoice = self.object
+        if object.status == "Delivered" and object.want_return == True:
+            self.fields = ['status', 'is_picked', 'is_returned']
+        return super(UpdateOrderStatus, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        object = self.get_object()
+        # invoice = self.object
+        if object.status == "Delivered" and object.want_return == True:
+            self.fields = ['status', 'is_picked', 'is_returned']
+        return super(UpdateOrderStatus, self).post(request, *args, **kwargs)
+
+
+# else:
+#     fields = ['status']
 
 
 '''For viewing the orders of the brand of the vendor'''
@@ -216,7 +248,9 @@ class UpdateOrderStatus(UpdateView):
 
 class ViewOrdersVendor(View):
     def get(self, request):
-        invoice = Invoice.objects.filter(product__brand=self.request.user.brand)
+        brand_user = Brand.objects.get(user=request.user)
+        # print(brand_user)
+        invoice = Invoice.objects.filter(product__brand=brand_user)
         return render(request, 'product/view_order_vendor.html', {'invoice': invoice})
 
 
@@ -322,67 +356,65 @@ class OnlyAddress(View):
         return render(request, 'product/only_address.html', {'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY})
 
 
-
-
 '''For getting the address, quantity for order from the cart'''
 
 
-class AddAddressOnlyView(View):
-    def post(self, request):
-        customer = Customer.objects.get(user=self.request.user)
-        cart_products = Cart.objects.filter(customer=customer)
-        address = self.request.POST.get('address-buy')
-        total_amount = 0
-        invoices = []
-
-        '''for checking the quantity'''
-        for i in cart_products:
-            if i.product.available_quantity >= i.quantity:
-                product = i
-                i.product.available_quantity -= i.quantity
-                i.product.save()
-                total_amount += float(product.product.calculate_discount) * product.quantity
-                invoices.append(Invoice(product=product.product, quantity=product.quantity))
-            else:
-                break
-        else:
-            order = Order.objects.create(customer=customer, address=address, total_amount=0)
-            for i in invoices:
-                i.order = order
-                i.save()
-            Order.objects.filter(customer=customer, address=address, total_amount=0).update(total_amount=total_amount)
-            Cart.objects.filter(customer=customer).delete()
-            messages.success(request, "Order successful")
-            return redirect('orders')
-        return redirect('grocery_store_home')
-
-
-'''For getting the address, quantity for the single item order'''
-
-
-class AddAddressView(View):
-    def post(self, request, pk):
-        customer = Customer.objects.get(user=self.request.user)
-        product = Product.objects.get(pk=pk)
-        address = self.request.POST.get('address-buy')
-        quantity = self.request.POST.get('quantityy')
-        available_items = Product.objects.get(pk=pk).available_quantity
-
-        '''for checking the quantity'''
-        if available_items >= float(quantity):
-            items_left = available_items - float(quantity)
-            order = Order.objects.create(customer=customer, address=address,
-                                         total_amount=Product.objects.get(pk=pk).calculate_discount)
-            Invoice.objects.create(order=order, product=product, quantity=quantity)
-            number_purchased = Product.objects.get(pk=pk).no_of_purchases
-            number_purchased += float(quantity)
-            Product.objects.filter(pk=pk).update(no_of_purchases=number_purchased)
-            Product.objects.filter(pk=pk).update(available_quantity=items_left)
-            messages.success(request, "Order successful")
-            return redirect('orders')
-        else:
-            messages.success(request, "Item not available in that quantity")
-            return redirect('grocery_store_home')
+# class AddAddressOnlyView(View):
+#     def post(self, request):
+#         customer = Customer.objects.get(user=self.request.user)
+#         cart_products = Cart.objects.filter(customer=customer)
+#         address = self.request.POST.get('address-buy')
+#         total_amount = 0
+#         invoices = []
+#
+#         '''for checking the quantity'''
+#         for i in cart_products:
+#             if i.product.available_quantity >= i.quantity:
+#                 product = i
+#                 i.product.available_quantity -= i.quantity
+#                 i.product.save()
+#                 total_amount += float(product.product.calculate_discount) * product.quantity
+#                 invoices.append(Invoice(product=product.product, quantity=product.quantity))
+#             else:
+#                 break
+#         else:
+#             order = Order.objects.create(customer=customer, address=address, total_amount=0)
+#             for i in invoices:
+#                 i.order = order
+#                 i.save()
+#             Order.objects.filter(customer=customer, address=address, total_amount=0).update(total_amount=total_amount)
+#             Cart.objects.filter(customer=customer).delete()
+#             messages.success(request, "Order successful")
+#             return redirect('orders')
+#         return redirect('grocery_store_home')
+#
+#
+# '''For getting the address, quantity for the single item order'''
+#
+#
+# class AddAddressView(View):
+#     def post(self, request, pk):
+#         customer = Customer.objects.get(user=self.request.user)
+#         product = Product.objects.get(pk=pk)
+#         address = self.request.POST.get('address-buy')
+#         quantity = self.request.POST.get('quantityy')
+#         available_items = Product.objects.get(pk=pk).available_quantity
+#
+#         '''for checking the quantity'''
+#         if available_items >= float(quantity):
+#             items_left = available_items - float(quantity)
+#             order = Order.objects.create(customer=customer, address=address,
+#                                          total_amount=Product.objects.get(pk=pk).calculate_discount)
+#             Invoice.objects.create(order=order, product=product, quantity=quantity)
+#             number_purchased = Product.objects.get(pk=pk).no_of_purchases
+#             number_purchased += float(quantity)
+#             Product.objects.filter(pk=pk).update(no_of_purchases=number_purchased)
+#             Product.objects.filter(pk=pk).update(available_quantity=items_left)
+#             messages.success(request, "Order successful")
+#             return redirect('orders')
+#         else:
+#             messages.success(request, "Item not available in that quantity")
+#             return redirect('grocery_store_home')
 
 
 class OrderDetailsView(View):
@@ -397,10 +429,6 @@ class OrderDetailsView(View):
 class PurchasedView(View):
     def get(self, request):
         items = Order.objects.filter(customer=Customer.objects.get(user=self.request.user))
-        # items = []
-        # for i in orders:
-        #     items += Invoice.objects.filter(order=i)
-
         return render(request, 'product/view_purchased.html', {'items': items})
 
 
@@ -412,6 +440,19 @@ class DetailPurchasedView(View):
         order = Order.objects.get(pk=pk)
         all_orders = Invoice.objects.filter(order=pk)
         return render(request, 'product/detail_order.html', {'all_orders': all_orders, 'order': order})
+
+
+class ReturnProductView(TemplateView):
+    template_name = 'product/return.html'
+
+
+class ReturnStatus(View):
+    def post(self, request, pk):
+        invoice = Invoice.objects.get(pk=pk)
+        invoice.reason = request.POST.get('return')
+        invoice.want_return = True
+        invoice.save()
+        return redirect('orders')
 
 
 '''For filtering the product based on min and max price'''
@@ -609,19 +650,6 @@ class CartView(ListView):
         products = Cart.objects.filter(customer=Customer.objects.get(user=self.request.user))
         return products
 
-
-# class HomeView(ListView):
-#     template_name = 'product/home.html'
-#     model = Product
-#     context_object_name = 'products'
-#     # 'purchases': Product.objects.order_by('-no_of_purchases')[0:5]
-#     # 'reviews' : Review.objects.order_by('-product')[0:5]
-#     # 'wishlist' : WishList.objects.order_by('-product')[0:5]
-#
-#     extra_context = {
-#         'category': Category.objects.all(),
-#         'trendings': Product.objects.order_by('-no_of_purchases')[0:5]
-#     }
 
 class HomeView(View):
     def get(self, request):

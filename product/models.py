@@ -107,10 +107,11 @@ class Invoice(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     quantity = models.IntegerField()
-    # packed = models.BooleanField(default=0, null=True)
-    # shipped = models.BooleanField(default=0, null=True)
-    # delivered = models.BooleanField(default=0, null=True)
     status = models.CharField(max_length=30, choices=status_choices, default="Initialized")
+    want_return = models.BooleanField(default=False)
+    is_picked = models.BooleanField(default=False)
+    is_returned = models.BooleanField(default=False)
+    reason = models.TextField(max_length=500, null=True)
 
     @property
     def total_price(self):

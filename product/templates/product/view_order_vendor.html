@@ -10,6 +10,7 @@
                 <div class="cart-row">
                     <div style="flex: 1;"><strong>Invoice Id</strong></div>
                     <div style="flex: 1;"><strong>Order Id</strong></div>
+                    <div style="flex: 1;"><strong>Customer</strong></div>
                     <div style="flex: 1;"><strong>Address</strong></div>
                     <div style="flex: 2;"><strong>DateTime</strong></div>
                     <div style="flex: 1;"><strong>Payment Method</strong></div>
@@ -29,6 +30,7 @@
                         <div style="flex: 1;"><a href="{% url 'update-product-status' item.id %}">{{ item.id }}</a></div>
 {#                        <div style="flex: 1;"><a href="{% url 'update-order-status' item.order.id %}">{{ item.order.id }}</a></div>#}
                         <div style="flex: 1;">{{ item.order.id }}</div>
+                        <div style="flex: 1;">{{ item.order.customer }}</div>
                         <div style="flex: 1;">{{ item.order.address }}</div>
                         <div style="flex: 2;">{{ item.order.datetime }}</div>
                         <div style="flex: 1;">{{ item.order.payment_method }}</div>

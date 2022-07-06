@@ -1,13 +1,13 @@
 from django.urls import path
 from .views import DetailProductView, SearchProduct, CartView, AddToCart, WishListView, AddToWishList, \
     RemoveFromWishList, RemoveFromCart, UpdateCart, AddToFavourites, FavouriteView, RemoveFromFavourites, \
-    AddReviewView, CategoryView, FilterProduct, OrderDetailsView, AddAddressView, PurchasedView, OnlyAddress, \
-    AddAddressOnlyView, AddCategory, UpdateBrandName, AddProductView, ProductView, UpdateProductView, \
+    AddReviewView, CategoryView, FilterProduct, OrderDetailsView, PurchasedView, OnlyAddress, \
+    AddCategory, UpdateBrandName, AddProductView, ProductView, UpdateProductView, \
     DetailPurchasedView, DownloadInvoice, ViewOrdersVendor, UpdateOrderStatus, \
     ViewCheckout, FailureView, CreateCheckoutSession, PaymentSuccessView, CreateCheckoutSessionCart, \
-    PaymentSuccessViewCart
+    PaymentSuccessViewCart, ReturnProductView, ReturnStatus
 
-# UpdateOrderStatusOverall
+# UpdateOrderStatusOverall, , AddAddressView, AddAddressOnlyView,
 
 
 urlpatterns = [
@@ -29,7 +29,6 @@ urlpatterns = [
 
     path('<int:pk>/review/', AddReviewView.as_view(), name='add-review'),
 
-    path('category/<str:category>/', CategoryView.as_view(), name='view-category'),
     path('filter/', FilterProduct.as_view(), name='price-filter'),
 
     # path('<int:pk>/add_address/', AddAddressView.as_view(), name='buy-address'),
@@ -65,4 +64,6 @@ urlpatterns = [
     path('success_cart/', PaymentSuccessViewCart.as_view(), name='success-cart'),
     # path('checkout/address/', AddAddressOnlyView.as_view(), name='checkout-address'),
 
+    path('return/<int:pk>/',ReturnProductView.as_view() ,name='return-product'),
+    path('return_status/<int:pk>/', ReturnStatus.as_view(), name='return-status'),
 ]
