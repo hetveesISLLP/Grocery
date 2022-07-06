@@ -4,7 +4,8 @@ from .views import DetailProductView, SearchProduct, CartView, AddToCart, WishLi
     AddReviewView, CategoryView, FilterProduct, OrderDetailsView, AddAddressView, PurchasedView, OnlyAddress, \
     AddAddressOnlyView, AddCategory, UpdateBrandName, AddProductView, ProductView, UpdateProductView, \
     DetailPurchasedView, DownloadInvoice, ViewOrdersVendor, UpdateOrderStatus, \
-    ViewCheckout, FailureView, CreateCheckoutSession, PaymentSuccessView
+    ViewCheckout, FailureView, CreateCheckoutSession, PaymentSuccessView, CreateCheckoutSessionCart, \
+    PaymentSuccessViewCart
 
 # UpdateOrderStatusOverall
 
@@ -60,6 +61,8 @@ urlpatterns = [
     path('api/checkout-session/<int:pk>/', CreateCheckoutSession.as_view(), name='api_checkout_session'),
 
     path('checkout/', OnlyAddress.as_view(), name='buy-now-cart'),
-    path('checkout/address<int:pk>/', AddAddressOnlyView.as_view(), name='checkout-address'),
+    path('checkout/address/', CreateCheckoutSessionCart.as_view(), name='checkout-address'),
+    path('success_cart/', PaymentSuccessViewCart.as_view(), name='success-cart'),
+    # path('checkout/address/', AddAddressOnlyView.as_view(), name='checkout-address'),
 
 ]

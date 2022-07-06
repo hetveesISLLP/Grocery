@@ -93,11 +93,10 @@ status_choices = [
 class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
 
-
     # check for Invoice. No need
-    address = models.TextField(max_length=200)
+    address = models.TextField(max_length=200, null=True)
     datetime = models.DateTimeField(auto_now_add=True)
-    payment_method = models.CharField(max_length=30, choices=payment_choices, default='Cash On Delivery')
+    payment_method = models.CharField(max_length=30, choices=payment_choices, default='Card')
     total_amount = models.FloatField()
     # status = models.CharField(max_length=30, choices=status_choices, default="Initialized")
     stripe_payment_intent = models.CharField(max_length=200, null=True)
