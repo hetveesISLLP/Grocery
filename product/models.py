@@ -36,8 +36,9 @@ class Product(models.Model):
 
     def save(self, *args, **kwargs):
         super(Product, self).save(*args, **kwargs)
-        img = Image.open(self.image.path)
-        img.save(self.image.path)
+        print(self.image.path)
+        # img = Image.open(self.image.path)
+        # img.save(self.image.path)
 
     @property
     def calculate_discount(self):
