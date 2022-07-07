@@ -487,7 +487,7 @@ class FilterProduct(View):
 
 class CategoryView(ListView):
     def get(self, request, category):
-        # category = self.request.POST.get('category')
+        category = self.request.POST.get('category')
         products = Product.objects.filter(category=Category.objects.get(name=category))
         return render(request, 'product/filter_result.html', {'products': products, 'category': Category.objects.all()})
 

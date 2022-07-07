@@ -28,7 +28,7 @@ urlpatterns = [
     path('<int:pk>/remove_from_favourites/', RemoveFromFavourites.as_view(), name='remove-from-favourites'),
 
     path('<int:pk>/review/', AddReviewView.as_view(), name='add-review'),
-
+    path('category/<str:category>/', CategoryView.as_view(), name='view-category'),
     path('filter/', FilterProduct.as_view(), name='price-filter'),
 
     # path('<int:pk>/add_address/', AddAddressView.as_view(), name='buy-address'),
