@@ -39,6 +39,7 @@ class PaymentSuccessViewCart(View):
     template_name = "product/success_payment.html"
 
     '''To get the session id '''
+
     def get(self, request, *args, **kwargs):
         session_id = request.GET.get('session_id')
         if session_id is None:
@@ -93,7 +94,7 @@ class CreateCheckoutSessionCart(View):
             if i.product.available_quantity >= i.quantity:
                 pass
             else:
-                messages.error(request, "Item not available in that quantity")
+                messages.error(request, f"{i.product.name} not available in that quantity")
                 return JsonResponse({'message': False})
         else:
             '''For viewing items on the checkout page with this format'''
@@ -208,7 +209,7 @@ class CreateCheckoutSession(View):
 
             return JsonResponse({'sessionId': session.id})
         else:
-            messages.error(request, "Item not available in that quantity")
+            messages.error(request, f"{product.name} not available in that quantity")
             return JsonResponse({'message': False})
 
 
@@ -428,8 +429,8 @@ class OrderDetailsView(View):
 
 class PurchasedView(View):
     def get(self, request):
-        items = Order.objects.filter(customer=Customer.objects.get(user=self.request.user))
-        return render(request, 'product/view_purchased.html', {'items': items})
+        # items = Order.objects.filter(customer=Customer.objects.get(user=self.request.user))
+        return render(request, 'product/view_purchased.html', {'items': Order.get_orders_by_user(request.user)})
 
 
 '''For viewing the details of the purchased products'''

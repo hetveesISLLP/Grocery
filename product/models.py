@@ -108,6 +108,11 @@ class Order(models.Model):
     stripe_payment_intent = models.CharField(max_length=200, null=True)
     has_paid = models.BooleanField(default=False)
 
+    @staticmethod
+    def get_orders_by_user(user):
+        return Order.objects.filter(customer__user=user).exclude(total_amount=0)
+
+
 
 class Invoice(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)

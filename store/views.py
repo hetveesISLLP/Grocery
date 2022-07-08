@@ -109,6 +109,7 @@ def registerbrand(request):
             # u_user.save()
             # b_user.save()
 
+            # not needed if using custom admin pannel
             brand_admin_privileges = Group.objects.get(name='Brand_admin')
             brand_admin_privileges.user_set.add(u_user)
 
@@ -151,6 +152,8 @@ def register(request):
             return redirect('login')
 
         else:
+            print(c_form.errors)
+            print(u_form.errors)
             messages.error(request, 'Invalid data. Please try again.')
             # return redirect('register-user')
             return render(request, 'store/register.html', {'c_form': c_form, 'u_form': u_form})

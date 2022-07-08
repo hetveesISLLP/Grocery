@@ -1,5 +1,5 @@
 {% load static %}
-
+{% include 'product/messages.html' %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,6 +12,7 @@
     <script src="{% static 'product/js/product_checkout.js' %}" defer></script>
 </head>
 <body>
+{% include 'product/messages.html' %}
 <!-- Display a payment form -->
 <form id="payment-form" action="{% url 'view-checkout' %}" method="POST">
     <div id="payment-element">

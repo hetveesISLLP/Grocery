@@ -1,7 +1,9 @@
 {% extends 'product/admin_func.html' %}
+
 {% load static %}
 {% block content %}
 {% if invoice %}
+    {% include 'product/messages.html' %}
      <link rel="stylesheet" type="text/css" href="{% static 'product/css/cart.css' %}">
     <div class="container-fluid row">
         <div class="col-lg-12">

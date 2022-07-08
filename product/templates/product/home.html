@@ -1,4 +1,5 @@
 {#{% extends "product/base.html" %}#}
+
 {% load static %}
 {% load crispy_forms_tags %}
 <!DOCTYPE html>
@@ -22,6 +23,7 @@
 
 </head>
 <body>
+{% include 'product/messages.html' %}
 <nav class="navbar navbar-expand-lg bg-light">
     <div class="container-fluid">
         <a class="navbar-brand" href="{% url 'grocery_store_home' %}">Grocery Store</a>

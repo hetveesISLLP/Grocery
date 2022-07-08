@@ -1,4 +1,5 @@
 {% extends "product/base.html" %}
+
 {% load static %}
 {% load crispy_forms_tags %}
 {% block title %} Home {% endblock %}
@@ -16,6 +17,7 @@
 
 
 {% block content %}
+    {% include 'product/messages.html' %}
     <form action="{% url 'checkout-address' %}" method="POST">
 {#    <form action="{% url 'view-checkout' %}" method="POST">#}
         {% csrf_token %}

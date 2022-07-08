@@ -1,4 +1,6 @@
 {% extends "product/base.html" %}
+{#{% include 'product/messages.html' %}#}
+
 {% load static %}
 {% load crispy_forms_tags %}
 {% block title %} Home {% endblock %}
@@ -20,11 +22,12 @@
 
 
 {% block content %}
+    {% include 'product/messages.html' %}
     {% if products %}
 
-        {% for m in messages %}
-            {{ m }}
-        {% endfor %}
+{#        {% for m in messages %}#}
+{#            {{ m }}#}
+{#        {% endfor %}#}
         <div class="container-fluid row">
             <div class="box-element">
                 <a href="/" class="btn btn-outline-dark">&#x2190 Continue Shopping</a>

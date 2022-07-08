@@ -1,3 +1,4 @@
+
 {% load static %}
 {% load crispy_forms_tags %}
 <html>
@@ -9,7 +10,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'product/css/home.css' %}">
 </head>
 <body>
-
+{% include 'product/messages.html' %}
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <a class="navbar-brand" href="/">Navbar</a>
 
