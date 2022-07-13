@@ -21,21 +21,26 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 import json
 import math
+from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.mixins import LoginRequiredMixin
+from product.custom_mixins import UserIsCustomerMixin, UserIsSellerMixin
 
-stripe.api_key = 'sk_test_51LGcerSBrStSbNNxHd8IMfYJULu1SZ0QhBJViYUcKPOPRo7qr12w9wOH93rqhy00OZHd0P321jijOOOr4sMqhWq000VDho2bON'
+
+# stripe.api_key = 'sk_test_51LGcerSBrStSbNNxHd8IMfYJULu1SZ0QhBJViYUcKPOPRo7qr12w9wOH93rqhy00OZHd0P321jijOOOr4sMqhWq000VDho2bON'
 
 
-class FailureView(TemplateView):
+class FailureView(LoginRequiredMixin, UserIsCustomerMixin, TemplateView):
+    """Redirects to failure_payment page"""
     template_name = 'product/failure_payment.html'
 
 
-class ViewCheckout(TemplateView):
-    '''Redirects to view_checout.html page'''
+class ViewCheckout(LoginRequiredMixin, UserIsCustomerMixin, TemplateView):
+    """Redirects to view_checkout.html page"""
     template_name = 'product/view_checkout.html'
 
 
-class PaymentSuccessViewCart(View):
-    '''Redirect to success_payment.html page'''
+class PaymentSuccessViewCart(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """Redirect to success_payment.html page"""
     template_name = "product/success_payment.html"
 
     '''To get the session id '''
@@ -76,7 +81,9 @@ class PaymentSuccessViewCart(View):
         return render(request, self.template_name)
 
 
-class CreateCheckoutSessionCart(View):
+class CreateCheckoutSessionCart(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For creating checkout session while buying items from cart"""
+
     @method_decorator(csrf_exempt)
     def post(self, request):
         customer = Customer.objects.get(user=self.request.user)
@@ -99,17 +106,17 @@ class CreateCheckoutSessionCart(View):
         else:
             '''For viewing items on the checkout page with this format'''
             lis = []
-            for cproduct in cart_products:
+            for cart_product in cart_products:
                 lis.append({
                     'price_data': {
                         'currency': 'inr',
-                        'unit_amount': int(float(cproduct.product.calculate_discount) * 100),
+                        'unit_amount': int(float(cart_product.product.calculate_discount) * 100),
                         'product_data':
                             {
-                                'name': cproduct.product.name
+                                'name': cart_product.product.name
                             },
                     },
-                    'quantity': cproduct.quantity
+                    'quantity': cart_product.quantity
                 })
 
             stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -129,7 +136,8 @@ class CreateCheckoutSessionCart(View):
             return JsonResponse({'sessionId': session.id})
 
 
-class PaymentSuccessView(View):
+class PaymentSuccessView(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """After payment is successful"""
     template_name = "product/success_payment.html"
 
     def get(self, request, *args, **kwargs):
@@ -164,10 +172,9 @@ class PaymentSuccessView(View):
         return render(request, self.template_name)
 
 
-''' This view serves as an API to initialize the payment gateway.'''
+class CreateCheckoutSession(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """ This view serves as an API to initialize the payment gateway."""
 
-
-class CreateCheckoutSession(View):
     @method_decorator(csrf_exempt)
     def post(self, request, pk):
         customer = Customer.objects.get(user=self.request.user)
@@ -213,10 +220,8 @@ class CreateCheckoutSession(View):
             return JsonResponse({'message': False})
 
 
-'''For updating the status of the products'''
-
-
-class UpdateOrderStatus(UpdateView):
+class UpdateOrderStatus(LoginRequiredMixin, UserIsSellerMixin, UpdateView):
+    """For updating the status of the products"""
     model = Invoice
     # invoice = Invoice.objects.get()
     # print(invoice.status)
@@ -228,26 +233,21 @@ class UpdateOrderStatus(UpdateView):
     def get(self, request, *args, **kwargs):
         object = self.get_object()
         # invoice = self.object
-        if object.status == "Delivered" and object.want_return == True:
+        if object.status == "Delivered" and object.want_return:
             self.fields = ['status', 'is_picked', 'is_returned']
         return super(UpdateOrderStatus, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         object = self.get_object()
         # invoice = self.object
-        if object.status == "Delivered" and object.want_return == True:
+        if object.status == "Delivered" and object.want_return:
             self.fields = ['status', 'is_picked', 'is_returned']
         return super(UpdateOrderStatus, self).post(request, *args, **kwargs)
 
 
-# else:
-#     fields = ['status']
+class ViewOrdersVendor(LoginRequiredMixin, UserIsSellerMixin, View):
+    """For viewing the orders of the brand of the vendor"""
 
-
-'''For viewing the orders of the brand of the vendor'''
-
-
-class ViewOrdersVendor(View):
     def get(self, request):
         brand_user = Brand.objects.get(user=request.user)
         # print(brand_user)
@@ -255,7 +255,9 @@ class ViewOrdersVendor(View):
         return render(request, 'product/view_order_vendor.html', {'invoice': invoice})
 
 
-class DownloadInvoice(View):
+class DownloadInvoice(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For downloading invoice"""
+
     def get(self, request, pk):
         # template = get_template('product/detail_order.html')
         order = Order.objects.get(pk=pk)
@@ -287,10 +289,8 @@ def RenderToPdf(template_src, context_dict={}):
     return None
 
 
-'''For adding the category'''
-
-
-class AddCategory(CreateView):
+class AddCategory(LoginRequiredMixin, UserIsSellerMixin, CreateView):
+    """For adding the category"""
     model = Category
     fields = ['name']
     template_name = 'product/add_category.html'
@@ -301,22 +301,16 @@ class AddCategory(CreateView):
     }
 
 
-class ProductView(View):
+class ProductView(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """View the products to seller"""
+
     def get(self, request):
         return render(request, 'product/admin_func.html',
                       {'products': Product.objects.filter(brand=self.request.user.brand)})
 
 
-# class DeleteProductView(DeleteView):
-#     model = Product
-#     template_name = 'product/delete_product.html'
-#     success_url = reverse_lazy('grocery_store_home')
-
-
-'''For updating the product'''
-
-
-class UpdateProductView(UpdateView):
+class UpdateProductView(LoginRequiredMixin, UserIsSellerMixin, UpdateView):
+    """For updating the product"""
     model = Product
     fields = ['name', 'price', 'image', 'description', 'available_quantity', 'discount', 'category', 'volume',
               'volume_unit']
@@ -324,40 +318,34 @@ class UpdateProductView(UpdateView):
     success_url = reverse_lazy('view-product')
 
 
-'''For adding the product'''
-
-
-class AddProductView(CreateView):
+class AddProductView(LoginRequiredMixin, UserIsSellerMixin, CreateView):
+    """For adding the product"""
     model = Product
     fields = ['name', 'price', 'image', 'description', 'available_quantity', 'discount', 'category', 'volume',
               'volume_unit']
     template_name = 'product/add_product.html'
     success_url = reverse_lazy('view-product')
 
-    '''for setting the brand of product'''
-
     def form_valid(self, form):
+        """for setting the brand of product"""
         form.instance.brand = Brand.objects.get(user=self.request.user)
         form.instance.no_of_purchases = 0
         return super(AddProductView, self).form_valid(form)
 
 
-'''For updating the brand name'''
-
-
-class UpdateBrandName(UpdateView):
+class UpdateBrandName(LoginRequiredMixin, UserIsSellerMixin, UpdateView):
+    """For updating the brand name"""
     model = Brand
     fields = ['brand']
     template_name = 'product/update_brand_name.html'
     success_url = reverse_lazy('view-product')
 
 
-class OnlyAddress(View):
+class OnlyAddress(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """To get the address"""
+
     def get(self, request):
         return render(request, 'product/only_address.html', {'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY})
-
-
-'''For getting the address, quantity for order from the cart'''
 
 
 # class AddAddressOnlyView(View):
@@ -418,36 +406,39 @@ class OnlyAddress(View):
 #             return redirect('grocery_store_home')
 
 
-class OrderDetailsView(View):
+class OrderDetailsView(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """To get the order details"""
+
     def get(self, request, pk):
         return render(request, 'product/buy_address.html',
                       {'pk': pk, 'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY})
 
 
-'''For viewing the order details'''
+class PurchasedView(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For viewing the order details"""
 
-
-class PurchasedView(View):
     def get(self, request):
         # items = Order.objects.filter(customer=Customer.objects.get(user=self.request.user))
         return render(request, 'product/view_purchased.html', {'items': Order.get_orders_by_user(request.user)})
 
 
-'''For viewing the details of the purchased products'''
+class DetailPurchasedView(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For viewing the details of the purchased products"""
 
-
-class DetailPurchasedView(View):
     def get(self, request, pk):
         order = Order.objects.get(pk=pk)
         all_orders = Invoice.objects.filter(order=pk)
         return render(request, 'product/detail_order.html', {'all_orders': all_orders, 'order': order})
 
 
-class ReturnProductView(TemplateView):
+class ReturnProductView(LoginRequiredMixin, UserIsCustomerMixin, TemplateView):
+    """To return the product"""
     template_name = 'product/return.html'
 
 
-class ReturnStatus(View):
+class ReturnStatus(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """To view the return status of the order"""
+
     def post(self, request, pk):
         invoice = Invoice.objects.get(pk=pk)
         invoice.reason = request.POST.get('return')
@@ -456,10 +447,9 @@ class ReturnStatus(View):
         return redirect('orders')
 
 
-'''For filtering the product based on min and max price'''
-
-
 class FilterProduct(View):
+    """For filtering the product based on min and max price"""
+
     def get(self, request):
         min_val = request.GET.get('min_val') if request.GET.get('min_val') != '' else \
             Product.objects.order_by('price').values_list('price', flat=True)[0]
@@ -483,20 +473,17 @@ class FilterProduct(View):
         return render(request, 'product/filter_result.html', {'products': products})
 
 
-'''For viewing products of the specified category'''
-
-
 class CategoryView(ListView):
+    """For viewing products of the specified category"""
+
     def get(self, request, category):
-        category = self.request.POST.get('category')
         products = Product.objects.filter(category=Category.objects.get(name=category))
         return render(request, 'product/filter_result.html', {'products': products, 'category': Category.objects.all()})
 
 
-'''For adding the review to the product'''
+class AddReviewView(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For adding the review to the product"""
 
-
-class AddReviewView(View):
     def post(self, request, pk):
         customer = Customer.objects.get(user=request.user)
         review = self.request.POST.get('add_review')
@@ -506,10 +493,9 @@ class AddReviewView(View):
         return redirect('product-detail', pk=pk)
 
 
-'''For viewing all the products of the favourite brand'''
+class FavouriteView(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For viewing all the products of the favourite brand"""
 
-
-class FavouriteView(View):
     def get(self, request):
         customer = Customer.objects.get(user=request.user)
         fav = Favourites.objects.filter(customer=customer.id)
@@ -527,10 +513,9 @@ class FavouriteView(View):
             return render(request, 'product/favourites.html', {'all_brands': all_brands, })
 
 
-'''For removing brand from the favourites'''
+class RemoveFromFavourites(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For removing brand from the favourites"""
 
-
-class RemoveFromFavourites(View):
     def get(self, request, pk):
         brand = Brand.objects.get(pk=pk)
         customer = Customer.objects.get(user=request.user)
@@ -539,27 +524,27 @@ class RemoveFromFavourites(View):
         return redirect('favourites')
 
 
-'''For adding brand to the Favourites if not already exists'''
+class AddToFavourites(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For adding brand to the Favourites"""
 
-
-class AddToFavourites(View):
     def get(self, request, pk):
         brand = Brand.objects.get(pk=pk)
         customer = Customer.objects.get(user=request.user)
         try:
+            """Check if brand already in favourites"""
             Favourites.objects.get(customer=customer, brand=brand)
             messages.error(request, 'Brand Already exist in Favourites')
             return redirect('favourites')
-        except:
+        except ObjectDoesNotExist:
+            """Add brand to favourites"""
             Favourites.objects.create(customer=customer, brand=brand)
             messages.success(request, "Brand added to Favourites.")
             return redirect('favourites')
 
 
-'''For removing product from the Wishlist'''
+class RemoveFromWishList(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For removing product from the Wishlist"""
 
-
-class RemoveFromWishList(View):
     def get(self, request, pk):
         product = Product.objects.get(pk=pk)
         customer = Customer.objects.get(user=request.user)
@@ -568,69 +553,69 @@ class RemoveFromWishList(View):
         return redirect('wishlist')
 
 
-'''For removing product from the Cart'''
+class RemoveFromCart(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """ For removing product from the Cart """
 
-
-class RemoveFromCart(View):
     def get(self, request, pk):
         product = Product.objects.get(pk=pk)
         customer = Customer.objects.get(user=request.user)
+        """ get the customer, product and remove that product fom cart """
         Cart.objects.filter(customer=customer, product=product).delete()
         messages.success(request, "Item removed from Cart.")
         return redirect('cart')
 
 
-'''For adding product to the wishlist if not already exists'''
+class AddToWishList(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For adding item to WishList"""
 
-
-class AddToWishList(View):
     def get(self, request, pk):
         product = Product.objects.get(pk=pk)
         customer = Customer.objects.get(user=request.user)
         try:
+            """If item already exist in wishlist"""
             WishList.objects.get(customer=customer, product=product)
             messages.error(request, 'Item Already exist')
             return redirect('wishlist')
-        except:
+        except ObjectDoesNotExist:
+            """Add item to wishlist if not already exists"""
             WishList.objects.create(customer=customer, product=product)
             messages.success(request, "Item added to WishList.")
             return redirect('wishlist')
 
 
-'''For viewing products that are present in the wishlist'''
-
-
-class WishListView(ListView):
+class WishListView(LoginRequiredMixin, UserIsCustomerMixin, ListView):
+    """For viewing products that are present in the wishlist"""
     template_name = 'product/wishlist.html'
     context_object_name = 'products'
 
     def get_queryset(self):
+        """Get products based on Customer"""
         products = WishList.objects.filter(customer=Customer.objects.get(user=self.request.user))
         return products
 
 
-'''For adding a product to the cart if not already exists'''
+class AddToCart(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For adding a product to the cart """
 
-
-class AddToCart(View):
     def get(self, request, pk):
         product = Product.objects.get(pk=pk)
         customer = Customer.objects.get(user=request.user)
         quantity = 1
         try:
+            """Check if item already exists or not"""
             Cart.objects.get(customer=customer, product=product)
             messages.error(request, 'Item Already exist in cart')
             return redirect('cart')
-        except:
+        except ObjectDoesNotExist:
+            """Add item to cart if not already exists"""
             Cart.objects.create(customer=customer, product=product, quantity=quantity)
             messages.success(request, "Item added to Cart.")
             return redirect('cart')
 
 
-'''For updating the Cart'''
+class UpdateCart(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For updating the Cart"""
 
-
-class UpdateCart(View):
     def post(self, request, pk):
         product = Product.objects.get(pk=pk)
         customer = Customer.objects.get(user=request.user)
@@ -640,31 +625,38 @@ class UpdateCart(View):
         return redirect('cart')
 
 
-'''For viewing items in the cart'''
-
-
-class CartView(ListView):
+class CartView(LoginRequiredMixin, UserIsCustomerMixin, ListView):
+    """For viewing items in the cart"""
     template_name = 'product/add_to_cart.html'
     context_object_name = 'products'
 
     def get_queryset(self):
+        """Get products based on Customer"""
         products = Cart.objects.filter(customer=Customer.objects.get(user=self.request.user))
         return products
 
 
 class HomeView(View):
+    """View the home page"""
+
     def get(self, request):
+
         if request.user.is_staff and not request.user.is_superuser:
+            """Seller Panel"""
             products = Product.objects.filter(brand=self.request.user.brand)
             return render(request, 'product/admin_func.html', {'products': products})
+
         elif request.user.is_superuser:
+            """Super Admin Panel"""
             return redirect('admin:index')
         else:
+            """Customer Panel"""
             products = Product.objects.all()
             category = Category.objects.all()
 
-            trendings = Product.objects.order_by('-no_of_purchases').distinct()[0:5]
-            all_products = trendings
+            """View trending"""
+            trending = Product.objects.order_by('-no_of_purchases').distinct()[0:5]
+            all_products = trending
 
             review_id = Review.objects.values_list('product').annotate(product_count=Count('product')).order_by(
                 '-product_count')[0:5]
@@ -681,17 +673,14 @@ class HomeView(View):
                           {'products': products, 'category': category, 'all_products': all_products})
 
 
-'''Showing the details of each product'''
-
-
 class DetailProductView(DetailView):
+    """Showing the details of each product"""
     model = Product
 
 
-'''For searching a product based on name, description, brand, category'''
-
-
 class SearchProduct(View):
+    """For searching a product based on name, description, brand, category"""
+
     def post(self, request):
         searched = request.POST['searched']
         products_name = Product.objects.filter(

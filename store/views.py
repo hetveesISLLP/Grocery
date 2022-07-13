@@ -20,11 +20,11 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic.base import View
 
 
-class DeleteProfileView(View):
-    def get(self, request):
-        User.objects.get(username=request.user).delete()
-        messages.success(request, "User deleted successfully")
-        return render(request, 'store/delete_profile.html', {})
+# class DeleteProfileView(View):
+#     def get(self, request):
+#         User.objects.get(username=request.user).delete()
+#         messages.success(request, "User deleted successfully")
+#         return render(request, 'store/delete_profile.html', {})
 
 
 class ChangePasswordView(SuccessMessageMixin, PasswordChangeView):
@@ -110,8 +110,8 @@ def registerbrand(request):
             # b_user.save()
 
             # not needed if using custom admin pannel
-            brand_admin_privileges = Group.objects.get(name='Brand_admin')
-            brand_admin_privileges.user_set.add(u_user)
+            # brand_admin_privileges = Group.objects.get(name='Brand_admin')
+            # brand_admin_privileges.user_set.add(u_user)
 
             messages.success(request, "Successfully created brand")
             return redirect('login')
