@@ -5,6 +5,7 @@ from django.db.models.fields import IntegerField
 import math
 from PIL import Image
 
+
 class Category(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
@@ -33,12 +34,6 @@ class Product(models.Model):
     no_of_purchases = models.IntegerField(default=0)
     volume = models.FloatField()
     volume_unit = models.CharField(max_length=10, choices=volume_choices, default="gm")
-
-    # def save(self, *args, **kwargs):
-    #     super(Product, self).save(*args, **kwargs)
-    #     print(self.image.path)
-        # img = Image.open(self.image.path)
-        # img.save(self.image.path)
 
     @property
     def calculate_discount(self):
@@ -111,7 +106,6 @@ class Order(models.Model):
     @staticmethod
     def get_orders_by_user(user):
         return Order.objects.filter(customer__user=user).exclude(total_amount=0)
-
 
 
 class Invoice(models.Model):

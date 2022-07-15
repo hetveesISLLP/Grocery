@@ -493,6 +493,35 @@ class AddReviewView(LoginRequiredMixin, UserIsCustomerMixin, View):
         return redirect('product-detail', pk=pk)
 
 
+
+
+
+
+
+
+
+
+
+
+
+class AddToFavourites(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For adding brand to the Favourites"""
+
+    def get(self, request, pk):
+        brand = Brand.objects.get(pk=pk)
+        customer = Customer.objects.get(user=request.user)
+        try:
+            """Check if brand already in favourites"""
+            Favourites.objects.get(customer=customer, brand=brand)
+            messages.error(request, 'Brand Already exist in Favourites')
+            return redirect('favourites')
+        except ObjectDoesNotExist:
+            """Add brand to favourites"""
+            Favourites.objects.create(customer=customer, brand=brand)
+            messages.success(request, "Brand added to Favourites.")
+            return redirect('favourites')
+
+
 class FavouriteView(LoginRequiredMixin, UserIsCustomerMixin, View):
     """For viewing all the products of the favourite brand"""
 
@@ -524,47 +553,6 @@ class RemoveFromFavourites(LoginRequiredMixin, UserIsCustomerMixin, View):
         return redirect('favourites')
 
 
-class AddToFavourites(LoginRequiredMixin, UserIsCustomerMixin, View):
-    """For adding brand to the Favourites"""
-
-    def get(self, request, pk):
-        brand = Brand.objects.get(pk=pk)
-        customer = Customer.objects.get(user=request.user)
-        try:
-            """Check if brand already in favourites"""
-            Favourites.objects.get(customer=customer, brand=brand)
-            messages.error(request, 'Brand Already exist in Favourites')
-            return redirect('favourites')
-        except ObjectDoesNotExist:
-            """Add brand to favourites"""
-            Favourites.objects.create(customer=customer, brand=brand)
-            messages.success(request, "Brand added to Favourites.")
-            return redirect('favourites')
-
-
-class RemoveFromWishList(LoginRequiredMixin, UserIsCustomerMixin, View):
-    """For removing product from the Wishlist"""
-
-    def get(self, request, pk):
-        product = Product.objects.get(pk=pk)
-        customer = Customer.objects.get(user=request.user)
-        WishList.objects.filter(customer=customer, product=product).delete()
-        messages.success(request, "Item removed from WishList.")
-        return redirect('wishlist')
-
-
-class RemoveFromCart(LoginRequiredMixin, UserIsCustomerMixin, View):
-    """ For removing product from the Cart """
-
-    def get(self, request, pk):
-        product = Product.objects.get(pk=pk)
-        customer = Customer.objects.get(user=request.user)
-        """ get the customer, product and remove that product fom cart """
-        Cart.objects.filter(customer=customer, product=product).delete()
-        messages.success(request, "Item removed from Cart.")
-        return redirect('cart')
-
-
 class AddToWishList(LoginRequiredMixin, UserIsCustomerMixin, View):
     """For adding item to WishList"""
 
@@ -594,23 +582,49 @@ class WishListView(LoginRequiredMixin, UserIsCustomerMixin, ListView):
         return products
 
 
-class AddToCart(LoginRequiredMixin, UserIsCustomerMixin, View):
-    """For adding a product to the cart """
+class RemoveFromWishList(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For removing product from the Wishlist"""
 
     def get(self, request, pk):
         product = Product.objects.get(pk=pk)
         customer = Customer.objects.get(user=request.user)
+        WishList.objects.filter(customer=customer, product=product).delete()
+        messages.success(request, "Item removed from WishList.")
+        return redirect('wishlist')
+
+
+class AddToCart(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For adding a product to the cart """
+
+    def get(self, request, pk):
+
+        product = Product.objects.get(pk=pk)
+        customer = Customer.objects.get(user=request.user)
+
         quantity = 1
         try:
             """Check if item already exists or not"""
             Cart.objects.get(customer=customer, product=product)
+
             messages.error(request, 'Item Already exist in cart')
             return redirect('cart')
         except ObjectDoesNotExist:
             """Add item to cart if not already exists"""
+
             Cart.objects.create(customer=customer, product=product, quantity=quantity)
             messages.success(request, "Item added to Cart.")
             return redirect('cart')
+
+
+class CartView(LoginRequiredMixin, UserIsCustomerMixin, ListView):
+    """For viewing items in the cart"""
+    template_name = 'product/add_to_cart.html'
+    context_object_name = 'products'
+
+    def get_queryset(self):
+        """Get products based on Customer"""
+        products = Cart.objects.filter(customer=Customer.objects.get(user=self.request.user))
+        return products
 
 
 class UpdateCart(LoginRequiredMixin, UserIsCustomerMixin, View):
@@ -625,15 +639,16 @@ class UpdateCart(LoginRequiredMixin, UserIsCustomerMixin, View):
         return redirect('cart')
 
 
-class CartView(LoginRequiredMixin, UserIsCustomerMixin, ListView):
-    """For viewing items in the cart"""
-    template_name = 'product/add_to_cart.html'
-    context_object_name = 'products'
+class RemoveFromCart(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """ For removing product from the Cart """
 
-    def get_queryset(self):
-        """Get products based on Customer"""
-        products = Cart.objects.filter(customer=Customer.objects.get(user=self.request.user))
-        return products
+    def get(self, request, pk):
+        product = Product.objects.get(pk=pk)
+        customer = Customer.objects.get(user=request.user)
+        """ get the customer, product and remove that product fom cart """
+        Cart.objects.filter(customer=customer, product=product).delete()
+        messages.success(request, "Item removed from Cart.")
+        return redirect('cart')
 
 
 class HomeView(View):
@@ -673,11 +688,6 @@ class HomeView(View):
                           {'products': products, 'category': category, 'all_products': all_products})
 
 
-class DetailProductView(DetailView):
-    """Showing the details of each product"""
-    model = Product
-
-
 class SearchProduct(View):
     """For searching a product based on name, description, brand, category"""
 
@@ -696,3 +706,8 @@ class SearchProduct(View):
                           'products_name': products_name,
                       }
                       )
+
+
+class DetailProductView(DetailView):
+    """Showing the details of each product"""
+    model = Product
