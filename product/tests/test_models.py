@@ -4,84 +4,22 @@ from store.models import Customer, Brand
 from django.contrib.auth.models import User
 
 
-# @pytest.fixture
-# def create_customer(db, client):
-#     # This fixture creates user+customer and logs them in
-#     def make_user():
-#         user = User.objects.create_user(username='nana', password='nanshah11@N')
-#         user.email = 'nana@gmail.com'
-#         user.save()
-#         customer = Customer.objects.create(user=user, mobile_no='+911234312354', age=23, gender="Female")
-#         # is_logged_in = client.login(username=user.username, password='sasshah11@S')
-#         # assert is_logged_in
-#         return customer
-#
-#     return make_user
-#
-#
-# @pytest.fixture
-# def create_brand(db, client):
-#     # This fixture creates user+brand and logs them in
-#     def make_user():
-#         user = User.objects.create_user(username='sasa', password='sasshah11@S')
-#         user.email = 'sas@gmail.com'
-#         user.save()
-#         brand = Brand.objects.create(user=user, brand='bikaji')
-#         brand.user.is_active = True
-#         # is_logged_in = client.login(username=user.username, password='sasshah11@S')
-#         # assert is_logged_in
-#         return brand
-#
-#     return make_user
-#
-#
-# @pytest.fixture
-# def create_category(db, client):
-#     """Fixture for creating category"""
-#
-#     def make_category():
-#         category = Category.objects.create(name='bhujia')
-#         return category
-#
-#     return make_category
-#
-#
-# @pytest.fixture
-# def create_product(db, create_category, create_brand):
-#     """Fixture for creating category+brand+brand_login+product"""
-#
-#     def make_product():
-#         new_brand = create_brand()
-#         new_category = create_category()
-#         product = Product.objects.create(
-#             category=new_category,
-#             brand=new_brand,
-#             available_quantity=5,
-#             name='Bikaneri',
-#             price=200,
-#             image='/home/hetvi/Downloads/download.jpeg',
-#             discount=10,
-#             description='Very spicy and tasty',
-#             volume=1,
-#             volume_unit='kg',
-#             no_of_purchases=0
-#         )
-#         return product
-#
-#     return make_product
-
-
 class TestOrderModel(object):
     """Test case for Order Model"""
 
     def test_field_value(self, create_customer):
-        new_customer = create_customer()
-        order_obj = Order.objects.create(customer=new_customer, address='rajkot', total_amount=300)
-        order_view = Order.objects.all()
-        print("Order", order_view.values())
-        assert order_obj.customer == new_customer
-        assert order_obj.address == 'rajkot'
-        assert order_obj.total_amount == 300
+        new_customer, client = create_customer()
+        order_obj1 = Order.objects.create(customer=new_customer, address='rajkot', total_amount=300)
+        order_obj2 = Order.objects.create(customer=new_customer, address='porbander', total_amount=100)
+        # order_view = Order.objects.all()
+        # print("Order", order_view.values())
+        assert order_obj1.customer == new_customer
+        assert order_obj1.address == 'rajkot'
+        assert order_obj1.total_amount == 300
+        # assert order_obj2.customer == new_customer
+        # assert order_obj2.address == 'porbander'
+        # assert order_obj2.total_amount == 100
+
 
 
 class TestInvoiceModel(object):
@@ -89,7 +27,7 @@ class TestInvoiceModel(object):
 
     def test_field_value(self, create_product, create_customer):
         new_product = create_product()
-        new_customer = create_customer()
+        new_customer, client = create_customer()
         order_obj = Order.objects.create(customer=new_customer, address='rajkot', total_amount=300)
         invoice_obj = Invoice.objects.create(order=order_obj, product=new_product, quantity=4)
         invoice_view = Invoice.objects.all()
@@ -98,6 +36,7 @@ class TestInvoiceModel(object):
         assert invoice_obj.order == order_obj
         assert invoice_obj.product == new_product
         assert invoice_obj.quantity == 4
+        assert invoice_obj.total_price == '720.00'
 
 
 class TestFavouritesModel(object):
@@ -105,7 +44,7 @@ class TestFavouritesModel(object):
 
     def test_field_value(self, create_brand, create_customer):
         new_brand = create_brand()
-        new_customer = create_customer()
+        new_customer, client = create_customer()
         favourites_obj = Favourites.objects.create(brand=new_brand, customer=new_customer)
         favourites_view = Favourites.objects.all()
         print("Favourites", favourites_view.values())
@@ -117,7 +56,7 @@ class TestWishListModel(object):
     """Test case for WishList Model"""
 
     def test_field_value(self, create_customer, create_product):
-        new_customer = create_customer()
+        new_customer, client = create_customer()
         new_product = create_product()
         wishlist_obj = WishList.objects.create(customer=new_customer, product=new_product)
         wishlist_view = WishList.objects.all()
@@ -130,7 +69,7 @@ class TestCartModel(object):
     """Test for Cart Model"""
 
     def test_field_value(self, create_customer, create_product):
-        new_customer = create_customer()
+        new_customer, client = create_customer()
         new_product = create_product()
         cart_obj = Cart.objects.create(customer=new_customer, product=new_product, quantity=5)
         cart_view = Cart.objects.all()
@@ -138,6 +77,9 @@ class TestCartModel(object):
         assert cart_obj.customer == new_customer
         assert cart_obj.product == new_product
         assert cart_obj.quantity == 5
+        assert cart_obj.item_total() == '900.00'
+
+
 
 
 class TestReviewModel(object):
@@ -145,7 +87,7 @@ class TestReviewModel(object):
 
     def test_field_value(self, create_product, create_customer):
         new_product = create_product()
-        new_customer = create_customer()
+        new_customer, client = create_customer()
         review = Review.objects.create(customer=new_customer, product=new_product, review='very good')
         view_review = Review.objects.all()
         print("Review", view_review.values())
@@ -159,10 +101,17 @@ class TestProductModel(object):
 
     @pytest.mark.django_db
     def test_field_value(self, create_product):
-        product = create_product()
-        product_obj = Product.objects.all()
-        print("Product", product_obj.values())
+        product = create_product(p_name='polo')
+        # product_obj = Product.objects.all()
+        # print("Product", product_obj.values())
         assert product.description == 'Very spicy and tasty'
+        assert product.calculate_discount == '180.00'
+        assert str(product) == 'polo'
+
+        product2 = create_product(p_discount=0)
+        assert product2.description == 'Very spicy and tasty'
+        assert product2.calculate_discount == '200.00'
+
 
 
 class TestCategoryModel(object):
@@ -170,6 +119,6 @@ class TestCategoryModel(object):
 
     @pytest.mark.django_db
     def test_field_value(self, create_category):
-        new_category = create_category()
+        new_category = create_category(name='bhujia')
         print("category", new_category)
         assert new_category.name == 'bhujia'

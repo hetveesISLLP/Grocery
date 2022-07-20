@@ -34,108 +34,119 @@ class FailureView(LoginRequiredMixin, UserIsCustomerMixin, TemplateView):
     template_name = 'product/failure_payment.html'
 
 
-class ViewCheckout(LoginRequiredMixin, UserIsCustomerMixin, TemplateView):
-    """Redirects to view_checkout.html page"""
-    template_name = 'product/view_checkout.html'
+class ReturnStatus(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """To view the return status of the order"""
+
+    def post(self, request, pk):
+        invoice = Invoice.objects.get(pk=pk)
+        invoice.reason = request.POST.get('return')
+        invoice.want_return = True
+        invoice.save()
+        return redirect('orders')
 
 
-class PaymentSuccessViewCart(LoginRequiredMixin, UserIsCustomerMixin, View):
-    """Redirect to success_payment.html page"""
-    template_name = "product/success_payment.html"
+class ReturnProductView(LoginRequiredMixin, UserIsCustomerMixin, TemplateView):
+    """To return the product"""
+    template_name = 'product/return.html'
 
-    '''To get the session id '''
+
+class UpdateOrderStatus(LoginRequiredMixin, UserIsSellerMixin, UpdateView):
+    """For updating the status of the products"""
+    model = Invoice
+    # invoice = Invoice.objects.get()
+    # print(invoice.status)
+    # if Invoice.status == 'Delivered':
+    fields = ['status']
+    template_name = 'product/update_order_status.html'
+    success_url = reverse_lazy('view-order')
 
     def get(self, request, *args, **kwargs):
-        session_id = request.GET.get('session_id')
-        if session_id is None:
-            return HttpResponseNotFound()
+        object = self.get_object()
+        # invoice = self.object
+        if object.status == "Delivered" and object.want_return:
+            self.fields = ['status', 'is_picked', 'is_returned']
+        return super(UpdateOrderStatus, self).get(request, *args, **kwargs)
 
-        stripe.api_key = settings.STRIPE_SECRET_KEY
-        '''retreives session id'''
-        session = stripe.checkout.Session.retrieve(session_id)
-
-        customer = Customer.objects.get(user=request.user)
-        total_amount = 0
-        order = get_object_or_404(Order, stripe_payment_intent=session.payment_intent)
-
-        invoices = []
-        cart_products = Cart.objects.filter(customer=customer)
-
-        for i in cart_products:
-            product = i
-            i.product.available_quantity -= i.quantity
-            i.product.save()
-            total_amount += int(float(product.product.calculate_discount) * product.quantity)
-            invoices.append(Invoice(product=product.product, quantity=product.quantity))
-
-        order.has_paid = True
-        order.address = request.GET.get('address')
-        order.total_amount = total_amount
-        order.save()
-        Cart.objects.filter(customer=customer).delete()
-
-        for i in invoices:
-            i.order = order
-            i.save()
-
-        return render(request, self.template_name)
+    def post(self, request, *args, **kwargs):
+        object = self.get_object()
+        # invoice = self.object
+        if object.status == "Delivered" and object.want_return:
+            self.fields = ['status', 'is_picked', 'is_returned']
+        return super(UpdateOrderStatus, self).post(request, *args, **kwargs)
 
 
-class CreateCheckoutSessionCart(LoginRequiredMixin, UserIsCustomerMixin, View):
-    """For creating checkout session while buying items from cart"""
+class ViewOrdersVendor(LoginRequiredMixin, UserIsSellerMixin, View):
+    """For viewing the orders of the brand of the vendor"""
 
-    @method_decorator(csrf_exempt)
-    def post(self, request):
-        customer = Customer.objects.get(user=self.request.user)
-        cart_products = Cart.objects.filter(customer=customer)
-
-        '''json.loads() will only accept a unicode string, so you must decode request.body before json.loads()'''
-        detail = request.body.decode('utf-8')
-        '''get all data from json'''
-        body = json.loads(detail)
-        '''get address from the body'''
-        address = body['address-buy']
-
-        '''for checking the quantity'''
-        for i in cart_products:
-            if i.product.available_quantity >= i.quantity:
-                pass
-            else:
-                messages.error(request, f"{i.product.name} not available in that quantity")
-                return JsonResponse({'message': False})
-        else:
-            '''For viewing items on the checkout page with this format'''
-            lis = []
-            for cart_product in cart_products:
-                lis.append({
-                    'price_data': {
-                        'currency': 'inr',
-                        'unit_amount': int(float(cart_product.product.calculate_discount) * 100),
-                        'product_data':
-                            {
-                                'name': cart_product.product.name
-                            },
-                    },
-                    'quantity': cart_product.quantity
-                })
-
-            stripe.api_key = settings.STRIPE_SECRET_KEY
-
-            '''creating a checkout session with payment_method = card'''
-            session = stripe.checkout.Session.create(
-                payment_method_types=['card'],
-                line_items=lis,
-                mode='payment',
-                success_url=request.build_absolute_uri(
-                    reverse('success-cart')) + "?session_id={CHECKOUT_SESSION_ID}&address=" + address,
-                cancel_url=request.build_absolute_uri(reverse('failure')),
-            )
-
-            Order.objects.create(customer=customer, total_amount=0, stripe_payment_intent=session['payment_intent'])
-
-            return JsonResponse({'sessionId': session.id})
+    def get(self, request):
+        brand_user = Brand.objects.get(user=request.user)
+        # print(brand_user)
+        invoice = Invoice.objects.filter(product__brand=brand_user)
+        return render(request, 'product/view_order_vendor.html', {'invoice': invoice})
 
 
+# cant test for this
+class DownloadInvoice(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For downloading invoice"""
+
+    def get(self, request, pk):
+        # template = get_template('product/detail_order.html')
+        order = Order.objects.get(pk=pk)
+        invoice = Invoice.objects.filter(order=order)
+        context = {
+
+            'all_orders': Invoice.objects.filter(order=pk),
+            'order': order,
+            'order_ids': order.id
+        }
+        pdf = RenderToPdf('product/invoice.html', context)
+        if pdf:
+            response = HttpResponse(pdf, content_type='application/pdf')
+            filename = "Invoice_%s.pdf" % context['order_ids']
+
+            content = "file; filename='%s'" % (filename)
+            response['Content-Disposition'] = content
+            return response
+        return HttpResponse("Not found")
+
+
+# cant test for this
+def RenderToPdf(template_src, context_dict={}):
+    template = get_template(template_src)
+    html = template.render(context_dict)
+    result = BytesIO()
+    pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
+    if not pdf.err:
+        return HttpResponse(result.getvalue(), content_type='application/pdf')
+    return None
+
+
+class ProductView(LoginRequiredMixin, UserIsSellerMixin, View):
+    """View the products to seller"""
+
+    def get(self, request):
+        return render(request, 'product/admin_func.html',
+                      {'products': Product.objects.filter(brand=self.request.user.brand)})
+
+
+class DetailPurchasedView(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For viewing the details of the purchased products"""
+
+    def get(self, request, pk):
+        order = Order.objects.get(pk=pk)
+        all_orders = Invoice.objects.filter(order=pk)
+        return render(request, 'product/detail_order.html', {'all_orders': all_orders, 'order': order})
+
+
+class PurchasedView(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For viewing the order details"""
+
+    def get(self, request):
+        # items = Order.objects.filter(customer=Customer.objects.get(user=self.request.user))
+        return render(request, 'product/view_purchased.html', {'items': Order.get_orders_by_user(request.user)})
+
+
+# cant write test for this
 class PaymentSuccessView(LoginRequiredMixin, UserIsCustomerMixin, View):
     """After payment is successful"""
     template_name = "product/success_payment.html"
@@ -213,80 +224,165 @@ class CreateCheckoutSession(LoginRequiredMixin, UserIsCustomerMixin, View):
             )
 
             Order.objects.create(customer=customer, stripe_payment_intent=session['payment_intent'], total_amount=0)
-
+            print(session.id)
             return JsonResponse({'sessionId': session.id})
         else:
             messages.error(request, f"{product.name} not available in that quantity")
             return JsonResponse({'message': False})
 
 
-class UpdateOrderStatus(LoginRequiredMixin, UserIsSellerMixin, UpdateView):
-    """For updating the status of the products"""
-    model = Invoice
-    # invoice = Invoice.objects.get()
-    # print(invoice.status)
-    # if Invoice.status == 'Delivered':
-    fields = ['status']
-    template_name = 'product/update_order_status.html'
-    success_url = reverse_lazy('view-order')
-
-    def get(self, request, *args, **kwargs):
-        object = self.get_object()
-        # invoice = self.object
-        if object.status == "Delivered" and object.want_return:
-            self.fields = ['status', 'is_picked', 'is_returned']
-        return super(UpdateOrderStatus, self).get(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        object = self.get_object()
-        # invoice = self.object
-        if object.status == "Delivered" and object.want_return:
-            self.fields = ['status', 'is_picked', 'is_returned']
-        return super(UpdateOrderStatus, self).post(request, *args, **kwargs)
-
-
-class ViewOrdersVendor(LoginRequiredMixin, UserIsSellerMixin, View):
-    """For viewing the orders of the brand of the vendor"""
-
-    def get(self, request):
-        brand_user = Brand.objects.get(user=request.user)
-        # print(brand_user)
-        invoice = Invoice.objects.filter(product__brand=brand_user)
-        return render(request, 'product/view_order_vendor.html', {'invoice': invoice})
-
-
-class DownloadInvoice(LoginRequiredMixin, UserIsCustomerMixin, View):
-    """For downloading invoice"""
+class OrderDetailsView(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """To get the order details"""
 
     def get(self, request, pk):
-        # template = get_template('product/detail_order.html')
-        order = Order.objects.get(pk=pk)
-        invoice = Invoice.objects.filter(order=order)
-        context = {
-
-            'all_orders': Invoice.objects.filter(order=pk),
-            'order': order,
-            'order_ids': order.id
-        }
-        pdf = RenderToPdf('product/invoice.html', context)
-        if pdf:
-            response = HttpResponse(pdf, content_type='application/pdf')
-            filename = "Invoice_%s.pdf" % context['order_ids']
-
-            content = "file; filename='%s'" % (filename)
-            response['Content-Disposition'] = content
-            return response
-        return HttpResponse("Not found")
+        return render(request, 'product/buy_address.html',
+                      {'pk': pk, 'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY})
 
 
-def RenderToPdf(template_src, context_dict={}):
-    template = get_template(template_src)
-    html = template.render(context_dict)
-    result = BytesIO()
-    pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
-    if not pdf.err:
-        return HttpResponse(result.getvalue(), content_type='application/pdf')
-    return None
+# cant test for this
+class PaymentSuccessViewCart(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """Redirect to success_payment.html page"""
+    template_name = "product/success_payment.html"
+
+    '''To get the session id '''
+
+    def get(self, request, *args, **kwargs):
+        session_id = request.GET.get('session_id')
+        if session_id is None:
+            return HttpResponseNotFound()
+
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        '''retreives session id'''
+        session = stripe.checkout.Session.retrieve(session_id)
+
+        customer = Customer.objects.get(user=request.user)
+        total_amount = 0
+        order = get_object_or_404(Order, stripe_payment_intent=session.payment_intent)
+
+        invoices = []
+        cart_products = Cart.objects.filter(customer=customer)
+
+        for i in cart_products:
+            product = i
+            i.product.available_quantity -= i.quantity
+            i.product.save()
+            total_amount += int(float(product.product.calculate_discount) * product.quantity)
+            invoices.append(Invoice(product=product.product, quantity=product.quantity))
+
+        order.has_paid = True
+        order.address = request.GET.get('address')
+        order.total_amount = total_amount
+        order.save()
+        Cart.objects.filter(customer=customer).delete()
+
+        for i in invoices:
+            i.order = order
+            i.save()
+
+        return render(request, self.template_name)
+
+
+class CreateCheckoutSessionCart(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """For creating checkout session while buying items from cart"""
+
+    @method_decorator(csrf_exempt)
+    def post(self, request):
+
+        customer = Customer.objects.get(user=self.request.user)
+        cart_products = Cart.objects.filter(customer=customer)
+
+        '''json.loads() will only accept a unicode string, so you must decode request.body before json.loads()'''
+        detail = request.body.decode('utf-8')
+        '''get all data from json'''
+        body = json.loads(detail)
+        '''get address from the body'''
+        address = body['address-buy']
+
+        '''for checking the quantity'''
+        for i in cart_products:
+            if i.product.available_quantity >= i.quantity:
+
+                pass
+            else:
+                messages.error(request, f"{i.product.name} not available in that quantity")
+                return JsonResponse({'message': False})
+        else:
+
+            '''For viewing items on the checkout page with this format'''
+            lis = []
+            for cart_product in cart_products:
+                lis.append({
+                    'price_data': {
+                        'currency': 'inr',
+                        'unit_amount': int(float(cart_product.product.calculate_discount) * 100),
+                        'product_data':
+                            {
+                                'name': cart_product.product.name
+                            },
+                    },
+                    'quantity': cart_product.quantity
+                })
+
+            stripe.api_key = settings.STRIPE_SECRET_KEY
+
+            '''creating a checkout session with payment_method = card'''
+            session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                line_items=lis,
+                mode='payment',
+                # not getting after suceess-cart
+                success_url=request.build_absolute_uri(
+                    reverse('success-cart')) + "?session_id={CHECKOUT_SESSION_ID}&address=" + address,
+                cancel_url=request.build_absolute_uri(reverse('failure')),
+            )
+
+            Order.objects.create(customer=customer, total_amount=0, stripe_payment_intent=session['payment_intent'])
+            # print(session.id)
+            return JsonResponse({'sessionId': session.id})
+
+
+class OnlyAddress(LoginRequiredMixin, UserIsCustomerMixin, View):
+    """To get the address"""
+
+    def get(self, request):
+        return render(request, 'product/only_address.html', {'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY})
+
+
+class ViewCheckout(LoginRequiredMixin, UserIsCustomerMixin, TemplateView):
+    """Redirects to view_checkout.html page"""
+    template_name = 'product/view_checkout.html'
+
+
+class UpdateProductView(LoginRequiredMixin, UserIsSellerMixin, UpdateView):
+    """For updating the product"""
+    model = Product
+    fields = ['name', 'price', 'image', 'description', 'available_quantity', 'discount', 'category', 'volume',
+              'volume_unit']
+    template_name = 'product/update_product.html'
+    success_url = reverse_lazy('grocery_store_home')
+
+
+class AddProductView(LoginRequiredMixin, UserIsSellerMixin, CreateView):
+    """For adding the product"""
+    model = Product
+    fields = ['name', 'price', 'image', 'description', 'available_quantity', 'discount', 'category', 'volume',
+              'volume_unit']
+    template_name = 'product/add_product.html'
+    success_url = reverse_lazy('grocery_store_home')
+
+    def form_valid(self, form):
+        """for setting the brand of product"""
+        form.instance.brand = Brand.objects.get(user=self.request.user)
+        form.instance.no_of_purchases = 0
+        return super(AddProductView, self).form_valid(form)
+
+
+class UpdateBrandName(LoginRequiredMixin, UserIsSellerMixin, UpdateView):
+    """For updating the brand name"""
+    model = Brand
+    fields = ['brand']
+    template_name = 'product/update_brand_name.html'
+    success_url = reverse_lazy('grocery_store_home')
 
 
 class AddCategory(LoginRequiredMixin, UserIsSellerMixin, CreateView):
@@ -301,171 +397,12 @@ class AddCategory(LoginRequiredMixin, UserIsSellerMixin, CreateView):
     }
 
 
-class ProductView(LoginRequiredMixin, UserIsCustomerMixin, View):
-    """View the products to seller"""
-
-    def get(self, request):
-        return render(request, 'product/admin_func.html',
-                      {'products': Product.objects.filter(brand=self.request.user.brand)})
-
-
-class UpdateProductView(LoginRequiredMixin, UserIsSellerMixin, UpdateView):
-    """For updating the product"""
-    model = Product
-    fields = ['name', 'price', 'image', 'description', 'available_quantity', 'discount', 'category', 'volume',
-              'volume_unit']
-    template_name = 'product/update_product.html'
-    success_url = reverse_lazy('view-product')
-
-
-class AddProductView(LoginRequiredMixin, UserIsSellerMixin, CreateView):
-    """For adding the product"""
-    model = Product
-    fields = ['name', 'price', 'image', 'description', 'available_quantity', 'discount', 'category', 'volume',
-              'volume_unit']
-    template_name = 'product/add_product.html'
-    success_url = reverse_lazy('view-product')
-
-    def form_valid(self, form):
-        """for setting the brand of product"""
-        form.instance.brand = Brand.objects.get(user=self.request.user)
-        form.instance.no_of_purchases = 0
-        return super(AddProductView, self).form_valid(form)
-
-
-class UpdateBrandName(LoginRequiredMixin, UserIsSellerMixin, UpdateView):
-    """For updating the brand name"""
-    model = Brand
-    fields = ['brand']
-    template_name = 'product/update_brand_name.html'
-    success_url = reverse_lazy('view-product')
-
-
-class OnlyAddress(LoginRequiredMixin, UserIsCustomerMixin, View):
-    """To get the address"""
-
-    def get(self, request):
-        return render(request, 'product/only_address.html', {'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY})
-
-
-# class AddAddressOnlyView(View):
-#     def post(self, request):
-#         customer = Customer.objects.get(user=self.request.user)
-#         cart_products = Cart.objects.filter(customer=customer)
-#         address = self.request.POST.get('address-buy')
-#         total_amount = 0
-#         invoices = []
-#
-#         '''for checking the quantity'''
-#         for i in cart_products:
-#             if i.product.available_quantity >= i.quantity:
-#                 product = i
-#                 i.product.available_quantity -= i.quantity
-#                 i.product.save()
-#                 total_amount += float(product.product.calculate_discount) * product.quantity
-#                 invoices.append(Invoice(product=product.product, quantity=product.quantity))
-#             else:
-#                 break
-#         else:
-#             order = Order.objects.create(customer=customer, address=address, total_amount=0)
-#             for i in invoices:
-#                 i.order = order
-#                 i.save()
-#             Order.objects.filter(customer=customer, address=address, total_amount=0).update(total_amount=total_amount)
-#             Cart.objects.filter(customer=customer).delete()
-#             messages.success(request, "Order successful")
-#             return redirect('orders')
-#         return redirect('grocery_store_home')
-#
-#
-# '''For getting the address, quantity for the single item order'''
-#
-#
-# class AddAddressView(View):
-#     def post(self, request, pk):
-#         customer = Customer.objects.get(user=self.request.user)
-#         product = Product.objects.get(pk=pk)
-#         address = self.request.POST.get('address-buy')
-#         quantity = self.request.POST.get('quantityy')
-#         available_items = Product.objects.get(pk=pk).available_quantity
-#
-#         '''for checking the quantity'''
-#         if available_items >= float(quantity):
-#             items_left = available_items - float(quantity)
-#             order = Order.objects.create(customer=customer, address=address,
-#                                          total_amount=Product.objects.get(pk=pk).calculate_discount)
-#             Invoice.objects.create(order=order, product=product, quantity=quantity)
-#             number_purchased = Product.objects.get(pk=pk).no_of_purchases
-#             number_purchased += float(quantity)
-#             Product.objects.filter(pk=pk).update(no_of_purchases=number_purchased)
-#             Product.objects.filter(pk=pk).update(available_quantity=items_left)
-#             messages.success(request, "Order successful")
-#             return redirect('orders')
-#         else:
-#             messages.success(request, "Item not available in that quantity")
-#             return redirect('grocery_store_home')
-
-
-class OrderDetailsView(LoginRequiredMixin, UserIsCustomerMixin, View):
-    """To get the order details"""
-
-    def get(self, request, pk):
-        return render(request, 'product/buy_address.html',
-                      {'pk': pk, 'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY})
-
-
-class PurchasedView(LoginRequiredMixin, UserIsCustomerMixin, View):
-    """For viewing the order details"""
-
-    def get(self, request):
-        # items = Order.objects.filter(customer=Customer.objects.get(user=self.request.user))
-        return render(request, 'product/view_purchased.html', {'items': Order.get_orders_by_user(request.user)})
-
-
-class DetailPurchasedView(LoginRequiredMixin, UserIsCustomerMixin, View):
-    """For viewing the details of the purchased products"""
-
-    def get(self, request, pk):
-        order = Order.objects.get(pk=pk)
-        all_orders = Invoice.objects.filter(order=pk)
-        return render(request, 'product/detail_order.html', {'all_orders': all_orders, 'order': order})
-
-
-class ReturnProductView(LoginRequiredMixin, UserIsCustomerMixin, TemplateView):
-    """To return the product"""
-    template_name = 'product/return.html'
-
-
-class ReturnStatus(LoginRequiredMixin, UserIsCustomerMixin, View):
-    """To view the return status of the order"""
-
-    def post(self, request, pk):
-        invoice = Invoice.objects.get(pk=pk)
-        invoice.reason = request.POST.get('return')
-        invoice.want_return = True
-        invoice.save()
-        return redirect('orders')
-
-
 class FilterProduct(View):
     """For filtering the product based on min and max price"""
 
     def get(self, request):
         min_val = request.GET.get('min_val') if request.GET.get('min_val') != '' else \
             Product.objects.order_by('price').values_list('price', flat=True)[0]
-
-        # values() --> Dictionary --> < QuerySet[{'comment_id': 1}, {'comment_id': 2}] >
-        # values_list() --> Tuples --> < QuerySet[(1,), (2,)] >
-        # values_list() with single field, flat=True --> single values instead of 1-tuples: --> < QuerySet[1, 2] >
-
-        # gives all products in tuple
-        # print(Product.objects.order_by('-price').values_list())
-
-        # gives all product prices in list
-        # print(Product.objects.order_by('-price').values_list('price', flat=True))
-
-        # gives the 1st value
-        # print(Product.objects.order_by('-price').values_list('price', flat=True)[0])
 
         max_val = request.GET.get('max_val') if request.GET.get('max_val') != '' else \
             Product.objects.order_by('-price').values_list('price', flat=True)[0]
@@ -491,17 +428,6 @@ class AddReviewView(LoginRequiredMixin, UserIsCustomerMixin, View):
         Review.objects.create(customer=customer, review=review, product=product)
         messages.success(request, "Review added successfully")
         return redirect('product-detail', pk=pk)
-
-
-
-
-
-
-
-
-
-
-
 
 
 class AddToFavourites(LoginRequiredMixin, UserIsCustomerMixin, View):
@@ -711,3 +637,60 @@ class SearchProduct(View):
 class DetailProductView(DetailView):
     """Showing the details of each product"""
     model = Product
+
+# class AddAddressOnlyView(View):
+#     def post(self, request):
+#         customer = Customer.objects.get(user=self.request.user)
+#         cart_products = Cart.objects.filter(customer=customer)
+#         address = self.request.POST.get('address-buy')
+#         total_amount = 0
+#         invoices = []
+#
+#         '''for checking the quantity'''
+#         for i in cart_products:
+#             if i.product.available_quantity >= i.quantity:
+#                 product = i
+#                 i.product.available_quantity -= i.quantity
+#                 i.product.save()
+#                 total_amount += float(product.product.calculate_discount) * product.quantity
+#                 invoices.append(Invoice(product=product.product, quantity=product.quantity))
+#             else:
+#                 break
+#         else:
+#             order = Order.objects.create(customer=customer, address=address, total_amount=0)
+#             for i in invoices:
+#                 i.order = order
+#                 i.save()
+#             Order.objects.filter(customer=customer, address=address, total_amount=0).update(total_amount=total_amount)
+#             Cart.objects.filter(customer=customer).delete()
+#             messages.success(request, "Order successful")
+#             return redirect('orders')
+#         return redirect('grocery_store_home')
+#
+#
+# '''For getting the address, quantity for the single item order'''
+#
+#
+# class AddAddressView(View):
+#     def post(self, request, pk):
+#         customer = Customer.objects.get(user=self.request.user)
+#         product = Product.objects.get(pk=pk)
+#         address = self.request.POST.get('address-buy')
+#         quantity = self.request.POST.get('quantityy')
+#         available_items = Product.objects.get(pk=pk).available_quantity
+#
+#         '''for checking the quantity'''
+#         if available_items >= float(quantity):
+#             items_left = available_items - float(quantity)
+#             order = Order.objects.create(customer=customer, address=address,
+#                                          total_amount=Product.objects.get(pk=pk).calculate_discount)
+#             Invoice.objects.create(order=order, product=product, quantity=quantity)
+#             number_purchased = Product.objects.get(pk=pk).no_of_purchases
+#             number_purchased += float(quantity)
+#             Product.objects.filter(pk=pk).update(no_of_purchases=number_purchased)
+#             Product.objects.filter(pk=pk).update(available_quantity=items_left)
+#             messages.success(request, "Order successful")
+#             return redirect('orders')
+#         else:
+#             messages.success(request, "Item not available in that quantity")
+#             return redirect('grocery_store_home')

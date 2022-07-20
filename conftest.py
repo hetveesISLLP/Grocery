@@ -42,6 +42,7 @@ def create_brand(db):
             brand = str(uuid.uuid4())
         user = User.objects.create_user(username=username, password='sasshah11@S')
         user.email = email
+        user.is_staff = True
         user.save()
         new_brand = Brand.objects.create(user=user, brand=brand)
         new_brand.user.is_active = True
@@ -69,11 +70,13 @@ def create_category(db, client):
 def create_product(db, create_category, create_brand):
     """Fixture for creating category+brand+brand_login+product"""
 
-    def make_product(name=None, brand=None, p_name=None):
+    def make_product(name=None, brand=None, p_name=None, p_discount=None):
         new_brand = create_brand(brand=brand)
         new_category = create_category(name=name)
         if p_name is None:
             p_name = str(uuid.uuid4())
+        if p_discount is None:
+            p_discount = 10
         product = Product.objects.create(
             category=new_category,
             brand=new_brand,
@@ -81,14 +84,11 @@ def create_product(db, create_category, create_brand):
             name=p_name,
             price=200,
             image='/home/hetvi/Downloads/download.jpeg',
-            discount=10,
+            discount=p_discount,
             description='Very spicy and tasty',
             volume=1,
             volume_unit='kg',
             no_of_purchases=0
         )
-
         return product
-
     return make_product
-

@@ -28,7 +28,7 @@ class Product(models.Model):
     available_quantity = models.IntegerField()
     name = models.CharField(max_length=50)
     price = models.FloatField()
-    image = models.ImageField(upload_to='product_images')
+    image = models.ImageField(upload_to='product_images', default='default.jpeg')
     discount = IntegerField(default=0)
     description = models.TextField(max_length=500)
     no_of_purchases = models.IntegerField(default=0)

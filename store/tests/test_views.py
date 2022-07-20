@@ -3,7 +3,7 @@ from django.urls import reverse
 from store.models import Customer, Brand
 from django.contrib.auth.models import User
 import pytest
-from pytest_django.asserts import assertTemplateUsed
+from pytest_django.asserts import assertTemplateUsed, assertRedirects
 
 
 class BaseTest(TestCase):
@@ -50,11 +50,18 @@ class RegisterTest(BaseTest):
         self.assertTrue(Customer.objects.filter(mobile_no=self.customer['mobile_no']).exists())
         self.assertEqual(response.status_code, 302)
 
+
+
     # check for registering brand
     def test_register_brand(self):
         response = self.client.post(self.register_brand_url, self.brand)
         Brand.objects.filter(brand=self.brand['brand'])
         self.assertEqual(response.status_code, 302)
+
+    # get register brand page
+    def test_register_brand_get(self):
+        response = self.client.get(self.register_brand_url, self.brand)
+        self.assertEqual(response.status_code, 200)
 
 
 class LoginTest(BaseTest):
@@ -101,18 +108,6 @@ class LoginTest(BaseTest):
 
 
 # ----------------------------------------------- Using Pytest ----------------------------------------------------------
-@pytest.fixture
-def create_customer(db, client):
-    # This fixture creates user+customer and logs them in
-    def make_user():
-        user = User.objects.create_user(username='sasa', password='sasshah11@S')
-        user.email = 'sas@gmail.com'
-        user.save()
-        customer = Customer.objects.create(user=user, mobile_no='+911234312354', age=23, gender="Female")
-        is_logged_in = client.login(username=user.username, password='sasshah11@S')
-        assert is_logged_in
-        return client, customer
-    return make_user
 
 
 class TestProfile:
@@ -120,10 +115,14 @@ class TestProfile:
     def test_view_page_correctly(self, create_customer):
         # for user profile
         self.user_profile = reverse('user-profile')
-        client, customer = create_customer()
+        customer, client = create_customer()
         response = client.get(self.user_profile)
         assert response.status_code == 200
         assertTemplateUsed(response, 'store/profile.html')
+        response = client.post(self.user_profile,
+                               data={'age': 56, 'username': customer.user.username, 'mobile_no': '+919089899090'})
+        assert response.status_code == 302
+        assertRedirects(response, reverse('user-profile'), 302, 200)
 
 
 class TestLogoutUser:
@@ -131,7 +130,7 @@ class TestLogoutUser:
     def test_view_page_correctly(self, create_customer):
         # for logout user
         self.logout_user = reverse('logout-user')
-        client, customer = create_customer()
+        customer, client = create_customer()
         response = client.get(self.logout_user)
         assert response.status_code == 200
         assertTemplateUsed(response, 'store/logout.html')
@@ -145,3 +144,23 @@ class TestLogoutUserW:
         response = client.get(self.logout_user)
         assert response.status_code == 200
         assertTemplateUsed(response, 'store/logout.html')
+
+
+class TestInvalidCustomer:
+    @pytest.mark.django_db
+    def test_invalid_data(self, client):
+        u = User.objects.create_user(username='laila', password='lailashah11@L')
+        c = Customer.objects.create(user=u, age='5', mobile_no='+909090909090')
+        response = client.post(reverse('register-user'))
+        assert response.status_code == 200
+        assertTemplateUsed(response, 'store/register.html')
+
+
+class TestInvalidBrand:
+    @pytest.mark.django_db
+    def test_invalid_data(self, client):
+        u = User.objects.create_user(username='laila', password='lailashah11@L')
+        b = Brand.objects.create(user=u, brand='sopo')
+        response = client.post(reverse('register-brand'))
+        assert response.status_code == 200
+        assertTemplateUsed(response, 'store/register_brand.html')

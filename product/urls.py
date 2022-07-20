@@ -31,39 +31,46 @@ urlpatterns = [
     path('category/<str:category>/', CategoryView.as_view(), name='view-category'),
     path('filter/', FilterProduct.as_view(), name='price-filter'),
 
-    # path('<int:pk>/add_address/', AddAddressView.as_view(), name='buy-address'),
-    # path('<int:pk>/buy_now/', OrderDetailsView.as_view(), name='buy-now'),
-    path('orders/', PurchasedView.as_view(), name='orders'),
-    path('orders/<int:pk>/', DetailPurchasedView.as_view(), name='detail-orders'),
-
+    # admin/seller/vendor functionalities
     path('add_category/', AddCategory.as_view(), name="add-category"),
     path('update_brand/<int:pk>/', UpdateBrandName.as_view(), name="update-brand_name"),
     path('add_product/<int:pk>/', AddProductView.as_view(), name="add-product"),
-    path('', ProductView.as_view(), name='view-product'),
     path('update_product/<int:pk>/', UpdateProductView.as_view(), name='update-product'),
 
-    path('download_invoice/<int:pk>/', DownloadInvoice.as_view(), name="download-invoice"),
-
-    path('view_orders/', ViewOrdersVendor.as_view(), name="view-order"),
-
-    path('update_order_status/<int:pk>/', UpdateOrderStatus.as_view(), name="update-product-status"),
-
-    # path('update-order-status/<int:pk>/', UpdateOrderStatusOverall.as_view(), name="update-order-status"),
-
-    path('create_session/', CreateCheckoutSession.as_view(), name='create-session'),
-
-    path('view_checkout/', ViewCheckout.as_view(), name='view-checkout'),
-    path('success/', PaymentSuccessView.as_view(), name='success'),
-    path('failure/', FailureView.as_view(), name='failure'),
-
-    path('<int:pk>/buy_now/', OrderDetailsView.as_view(), name='buy-now'),
-    path('api/checkout-session/<int:pk>/', CreateCheckoutSession.as_view(), name='api_checkout_session'),
-
+    # ask for address after clicking checkout
     path('checkout/', OnlyAddress.as_view(), name='buy-now-cart'),
+    # checkout page after entering address
     path('checkout/address/', CreateCheckoutSessionCart.as_view(), name='checkout-address'),
+    # payment success
     path('success_cart/', PaymentSuccessViewCart.as_view(), name='success-cart'),
-    # path('checkout/address/', AddAddressOnlyView.as_view(), name='checkout-address'),
 
+    # ask for quantity, address when clicked on buy-now
+    path('<int:pk>/buy_now/', OrderDetailsView.as_view(), name='buy-now'),
+    # checkout page after entering address, quantity
+    path('api/checkout-session/<int:pk>/', CreateCheckoutSession.as_view(), name='api_checkout_session'),
+    # payment success
+    path('success/', PaymentSuccessView.as_view(), name='success'),
+
+    path('orders/', PurchasedView.as_view(), name='orders'),
+    path('orders/<int:pk>/', DetailPurchasedView.as_view(), name='detail-orders'),
+    path('download_invoice/<int:pk>/', DownloadInvoice.as_view(), name="download-invoice"),
+    path('', ProductView.as_view(), name='view-product'),
+    path('view_orders/', ViewOrdersVendor.as_view(), name="view-order"),
+    path('update_order_status/<int:pk>/', UpdateOrderStatus.as_view(), name="update-product-status"),
     path('return/<int:pk>/',ReturnProductView.as_view() ,name='return-product'),
     path('return_status/<int:pk>/', ReturnStatus.as_view(), name='return-status'),
+    # done
+    path('view_checkout/', ViewCheckout.as_view(), name='view-checkout'),
+
+
+
+    path('failure/', FailureView.as_view(), name='failure'),
+
+
 ]
+
+# path('create_session/', CreateCheckoutSession.as_view(), name='create-session'),
+# path('<int:pk>/add_address/', AddAddressView.as_view(), name='buy-address'),
+# path('<int:pk>/buy_now/', OrderDetailsView.as_view(), name='buy-now'),
+# path('checkout/address/', AddAddressOnlyView.as_view(), name='checkout-address'),
+# path('update-order-status/<int:pk>/', UpdateOrderStatusOverall.as_view(), name="update-order-status"),

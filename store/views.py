@@ -41,15 +41,18 @@ def profile(request):
     user_form = ProfileUpdateFormUser(instance=user)
 
     if request.method == 'POST':
+        print(request.POST)
         customer_form = ProfileUpdateForm(request.POST, request.FILES, instance=user_details)
         user_form = ProfileUpdateFormUser(request.POST, instance=user)
 
         if user_form.is_valid() and customer_form.is_valid():
+
             user_form.save()
             customer_form.save()
 
             messages.success(request, f'Your account has been updated!')
             return redirect('user-profile')
+
 
     context = {
         'user_form': user_form,
