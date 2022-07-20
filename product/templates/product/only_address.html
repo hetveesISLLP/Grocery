@@ -19,10 +19,12 @@
 {% block content %}
     {% include 'product/messages.html' %}
     <form action="{% url 'checkout-address' %}" method="POST">
-{#    <form action="{% url 'view-checkout' %}" method="POST">#}
+        {#    <form action="{% url 'view-checkout' %}" method="POST">#}
         {% csrf_token %}
         <label for="address-buy">Add Your Address here : </label>
         <textarea id="address-buy" name="address-buy" rows="10" cols="50" required></textarea>
+        <p id="addres-req" style="display: none; color: red">Address is required</p>
+
         <button class="btn btn-outline-success" type="button" id="checkout-button">Submit</button>
     </form>
     <script src="https://js.stripe.com/v3/"></script>
@@ -49,34 +51,41 @@
         }
 
         checkoutButton.addEventListener('click', function () {
-            let data = {
-                'address-buy': document.getElementById('address-buy').value,
-            };
+                let addres = $('#address-buy').val()
+                if (addres != '') {
+                    let data = {
+                        'address-buy': document.getElementById('address-buy').value,
+                    };
 
-            let csrftoken = getCookie('csrftoken');
+                    let csrftoken = getCookie('csrftoken');
 
-            // Create a new Checkout Session using the server-side endpoint you
-            // created in step 3.
-            fetch("{% url 'checkout-address'  %}", {
-                headers: {'X-CSRFToken': csrftoken, 'Content-Type': 'application/json'},
-                body: JSON.stringify(data),
-                method: 'POST'
-            })
-                .then(function (response) {
-                    return response.json();
-                })
-                .then(function (session) {
-                    if (session.message === false) {
-                        return window.location.replace({% url 'grocery_store_home' %})
-                    } else {
-                        return stripe.redirectToCheckout({sessionId: session.sessionId});
-                    }
-                })
-                .then(function (result) {
-                    if (result.error) {
-                        alert(result.error.message);
-                    }
-                });
-        });
+                    // Create a new Checkout Session using the server-side endpoint you
+                    // created in step 3.
+                    fetch("{% url 'checkout-address'  %}", {
+                        headers: {'X-CSRFToken': csrftoken, 'Content-Type': 'application/json'},
+                        body: JSON.stringify(data),
+                        method: 'POST'
+                    })
+                        .then(function (response) {
+                            return response.json();
+                        })
+                        .then(function (session) {
+                            if (session.message === false) {
+                                return window.location.replace({% url 'grocery_store_home' %})
+                            } else {
+                                return stripe.redirectToCheckout({sessionId: session.sessionId});
+                            }
+                        })
+                        .then(function (result) {
+                            if (result.error) {
+                                alert(result.error.message);
+                            }
+                        });
+                } else {
+                    $('#addres-req').css('display', 'block')
+                }
+            }
+        )
+        ;
     </script>
 {% endblock %}
