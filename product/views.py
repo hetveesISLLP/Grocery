@@ -16,14 +16,17 @@ from django.http import HttpResponse
 from django.template.loader import get_template
 from django.utils.decorators import method_decorator
 import stripe
+from django.core.cache import cache
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.conf import settings
 import json
-import math
+from django.views.decorators.cache import cache_page
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.mixins import LoginRequiredMixin
 from product.custom_mixins import UserIsCustomerMixin, UserIsSellerMixin
+from django.conf import settings
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 
 
 # stripe.api_key = 'sk_test_51LGcerSBrStSbNNxHd8IMfYJULu1SZ0QhBJViYUcKPOPRo7qr12w9wOH93rqhy00OZHd0P321jijOOOr4sMqhWq000VDho2bON'
@@ -448,6 +451,27 @@ class AddToFavourites(LoginRequiredMixin, UserIsCustomerMixin, View):
             return redirect('favourites')
 
 
+class CacheResult(View):
+    template_name = 'product/cache_result.html'
+
+    def get(self, request):
+        # main logic
+        favourite_objects = cache.get('favourite_objects')
+
+        if favourite_objects is None:
+            favourite_objects = Favourites.objects.all()
+            cache.set('favourite_objects', favourite_objects)
+
+        # can be used in place of main logic (works same as main logic)
+        # favourite_objects = cache.get_or_set('favourite_objects', favourite_objects)
+
+        context = {
+            'products': favourite_objects
+        }
+
+        return render(request, self.template_name, context)
+
+
 class FavouriteView(LoginRequiredMixin, UserIsCustomerMixin, View):
     """For viewing all the products of the favourite brand"""
 
@@ -577,6 +601,8 @@ class RemoveFromCart(LoginRequiredMixin, UserIsCustomerMixin, View):
         return redirect('cart')
 
 
+# add this for class based view @method_decorator(cache_page(60 * 5), name='dispatch')
+# add this for function based view @cache_page(60 * 5)
 class HomeView(View):
     """View the home page"""
 

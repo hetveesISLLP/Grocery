@@ -5,7 +5,7 @@ from .views import DetailProductView, SearchProduct, CartView, AddToCart, WishLi
     AddCategory, UpdateBrandName, AddProductView, ProductView, UpdateProductView, \
     DetailPurchasedView, DownloadInvoice, ViewOrdersVendor, UpdateOrderStatus, \
     ViewCheckout, FailureView, CreateCheckoutSession, PaymentSuccessView, CreateCheckoutSessionCart, \
-    PaymentSuccessViewCart, ReturnProductView, ReturnStatus
+    PaymentSuccessViewCart, ReturnProductView, ReturnStatus, CacheResult
 
 # UpdateOrderStatusOverall, , AddAddressView, AddAddressOnlyView,
 
@@ -22,6 +22,8 @@ urlpatterns = [
     path('<int:pk>/add_to_wishlist/', AddToWishList.as_view(), name="add-to-wishlist"),
     path('wishlist/', WishListView.as_view(), name='wishlist'),
     path('<int:pk>/remove_from_wishlist/', RemoveFromWishList.as_view(), name="remove-from-wishlist"),
+
+    path('cache/', CacheResult.as_view(), name='cache'),
 
     path('<int:pk>/add_to_favourites/', AddToFavourites.as_view(), name='add-to-favourites'),
     path('favourites/', FavouriteView.as_view(), name='favourites'),

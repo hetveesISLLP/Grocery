@@ -23,6 +23,7 @@ Django==4.0.5
 django-crispy-forms==1.14.0
 django-on-heroku==1.1.2
 django-phonenumber-field==6.1.0
+django-redis==5.2.0
 future==0.18.2
 gunicorn==20.1.0
 html5lib==1.1

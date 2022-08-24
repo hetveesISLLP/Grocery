@@ -6,9 +6,11 @@ from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import cache_page
 
 urlpatterns = [
-    path('', HomeView.as_view(), name="grocery_store_home"),
+    # add cache_page(60*15)(view_name) or in views, Add, @cache_page(60*15) decorator
+    path('', cache_page(60*15)(HomeView.as_view()), name="grocery_store_home"),
     path('register/', register, name='register-user'),
     path('brand-register/', registerbrand, name="register-brand"),
     path('about/', AboutView.as_view(), name='about-us'),
