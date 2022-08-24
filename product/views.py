@@ -459,7 +459,8 @@ class CacheResult(View):
         favourite_objects = cache.get('favourite_objects')
 
         if favourite_objects is None:
-            favourite_objects = Favourites.objects.all()
+            favourite_objects = Product.objects.all()
+            print(favourite_objects)
             cache.set('favourite_objects', favourite_objects)
 
         # can be used in place of main logic (works same as main logic)
