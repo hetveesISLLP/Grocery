@@ -627,9 +627,6 @@ class SearchProduct(View):
 
         if request.user.is_authenticated:
             product_searched_not_available = products_name.filter(available_quantity=0)
-            # notify_for_products = [SearchedNotify(customer_name=request.user.customer, product_name=product) for product in product_searched_not_available]
-            # SearchedNotify.objects.bulk_create(notify_for_products)
-            # print(notify_for_products)
             for product in product_searched_not_available:
                 SearchedNotify.objects.get_or_create(customer_name=request.user.customer, product_name=product)
 
