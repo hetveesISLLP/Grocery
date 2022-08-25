@@ -91,6 +91,10 @@ DATABASES = {
         'PASSWORD': os.environ.get('PASS'),
         'USER': os.environ.get('USER_NAME'),
     }
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': BASE_DIR/'db.sqlite3'
+    # }
 }
 
 # Password validation
@@ -165,10 +169,11 @@ django_on_heroku.settings(locals())
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEYS')
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEYS')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
+
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379'
 CELERY_RESULT_BACKEND = "redis://localhost:6379"
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Kolkata'
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+# CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'

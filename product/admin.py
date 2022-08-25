@@ -1,5 +1,5 @@
 from django.contrib import admin
-from . models import WishList, Cart, Category, Invoice, Order, Review, Favourites, Product
+from . models import WishList, Cart, Category, Invoice, Order, Review, Favourites, Product, SearchedNotify
 
 admin.site.register(WishList)
 admin.site.register(Cart)
@@ -8,6 +8,7 @@ admin.site.register(Invoice)
 admin.site.register(Order)
 admin.site.register(Review)
 admin.site.register(Favourites)
+admin.site.register(SearchedNotify)
 
 
 class ProductModify(admin.ModelAdmin):

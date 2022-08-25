@@ -23,6 +23,7 @@ Django==4.0.5
 django-celery-beat==2.3.0
 django-celery-results==2.4.0
 django-crispy-forms==1.14.0
+django-lifecycle==1.0.0
 django-on-heroku==1.1.2
 django-phonenumber-field==6.1.0
 django-redis==5.2.0
@@ -74,6 +75,7 @@ tzdata==2022.1
 tzlocal==4.2
 uritools==4.0.0
 urllib3==1.26.9
+urlman==2.0.1
 validate-email-address==1
 vine==5.0.0
 wcwidth==0.2.5

@@ -4,6 +4,8 @@ from store.models import Customer, Brand
 from django.db.models.fields import IntegerField
 import math
 from PIL import Image
+from . tasks import send_email_when_quantity_available, eee
+from django_lifecycle import LifecycleModel, hook, AFTER_UPDATE
 
 
 class Category(models.Model):
@@ -22,7 +24,7 @@ volume_choices = (
 )
 
 
-class Product(models.Model):
+class Product(LifecycleModel):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE)
     available_quantity = models.IntegerField()
@@ -46,6 +48,17 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+    @hook(AFTER_UPDATE, when="available_quantity", was=0, has_changed=True)
+    def on_increasing_quantity(self):
+        name = Product.objects.get(id=self.id).name
+        price = Product.objects.get(id=self.id).price
+        message = f"Buy {name} at {price}."
+        subject = f"Hurray! {name} is available now."
+        products = SearchedNotify.objects.filter(product_name=self.id)
+        for i in products:
+            send_email_when_quantity_available.delay(subject, message, i.customer_name.user.email)
+        products.delete()
 
 
 class Favourites(models.Model):
@@ -121,3 +134,12 @@ class Invoice(models.Model):
     @property
     def total_price(self):
         return "{:.2f}".format(float(self.product.calculate_discount) * float(self.quantity))
+
+
+class SearchedNotify(models.Model):
+    customer_name = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    product_name = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return f"{self.product_name}"
+

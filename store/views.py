@@ -105,7 +105,7 @@ def registerbrand(request):
             b_user = b_form.save(commit=False)
             b_user.user = u_user
             b_user.brand = b_user.brand.lower()
-            b_form.save()
+            b_user.save()
 
 
 
