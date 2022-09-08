@@ -20,10 +20,15 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 import json
-import math
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.mixins import LoginRequiredMixin
 from product.custom_mixins import UserIsCustomerMixin, UserIsSellerMixin
+import logging
+
+logger = logging.getLogger('django')
+custom_logger = logging.getLogger('custom_logger')
+warn_and_above_logger = logging.getLogger('warn_and_above_logger')
+
 
 
 # stripe.api_key = 'sk_test_51LGcerSBrStSbNNxHd8IMfYJULu1SZ0QhBJViYUcKPOPRo7qr12w9wOH93rqhy00OZHd0P321jijOOOr4sMqhWq000VDho2bON'
@@ -440,11 +445,13 @@ class AddToFavourites(LoginRequiredMixin, UserIsCustomerMixin, View):
             """Check if brand already in favourites"""
             Favourites.objects.get(customer=customer, brand=brand)
             messages.error(request, 'Brand Already exist in Favourites')
+            custom_logger.warning(f'Brand {brand} already in {customer} favourites')
             return redirect('favourites')
         except ObjectDoesNotExist:
             """Add brand to favourites"""
             Favourites.objects.create(customer=customer, brand=brand)
             messages.success(request, "Brand added to Favourites.")
+            custom_logger.info(f"Brand {brand} added successfully to {customer} favourites")
             return redirect('favourites')
 
 
@@ -461,10 +468,12 @@ class FavouriteView(LoginRequiredMixin, UserIsCustomerMixin, View):
             products = Product.objects.filter(brand=fav[0].brand)
             for item in fav[1:]:
                 products |= Product.objects.filter(brand=item.brand)
+
             return render(request, 'product/favourites.html',
                           {'products': products, 'all_brands': all_brands, 'fav': fav})
         else:
             messages.error(request, "You have no favourites")
+            custom_logger.error(f"{customer} has no favourites")
             return render(request, 'product/favourites.html', {'all_brands': all_brands, })
 
 
@@ -476,6 +485,7 @@ class RemoveFromFavourites(LoginRequiredMixin, UserIsCustomerMixin, View):
         customer = Customer.objects.get(user=request.user)
         Favourites.objects.filter(customer=customer, brand=brand).delete()
         messages.success(request, "Brand removed from Favourites.")
+        custom_logger.critical(f"{customer} removed {brand} from favourites")
         return redirect('favourites')
 
 
@@ -488,12 +498,14 @@ class AddToWishList(LoginRequiredMixin, UserIsCustomerMixin, View):
         try:
             """If item already exist in wishlist"""
             WishList.objects.get(customer=customer, product=product)
-            messages.error(request, 'Item Already exist')
+            messages.warning(request, 'Item Already exist')
+            warn_and_above_logger.warning(f'{product} already exists in {customer} wihlist')
             return redirect('wishlist')
         except ObjectDoesNotExist:
             """Add item to wishlist if not already exists"""
             WishList.objects.create(customer=customer, product=product)
             messages.success(request, "Item added to WishList.")
+            warn_and_above_logger.info(f"{product} added succesfully to {customer} wishlist")
             return redirect('wishlist')
 
 
@@ -505,6 +517,7 @@ class WishListView(LoginRequiredMixin, UserIsCustomerMixin, ListView):
     def get_queryset(self):
         """Get products based on Customer"""
         products = WishList.objects.filter(customer=Customer.objects.get(user=self.request.user))
+        warn_and_above_logger.debug('view favourites')
         return products
 
 
@@ -516,6 +529,7 @@ class RemoveFromWishList(LoginRequiredMixin, UserIsCustomerMixin, View):
         customer = Customer.objects.get(user=request.user)
         WishList.objects.filter(customer=customer, product=product).delete()
         messages.success(request, "Item removed from WishList.")
+        warn_and_above_logger.critical(f'{product} removed from {customer} wishlist')
         return redirect('wishlist')
 
 
@@ -577,6 +591,8 @@ class RemoveFromCart(LoginRequiredMixin, UserIsCustomerMixin, View):
         return redirect('cart')
 
 
+
+
 class HomeView(View):
     """View the home page"""
 
@@ -585,6 +601,7 @@ class HomeView(View):
         if request.user.is_staff and not request.user.is_superuser:
             """Seller Panel"""
             products = Product.objects.filter(brand=self.request.user.brand)
+
             return render(request, 'product/admin_func.html', {'products': products})
 
         elif request.user.is_superuser:
@@ -609,7 +626,6 @@ class HomeView(View):
                 '-product_count')[0:5]
             for i in wishlist_id:
                 all_products |= Product.objects.filter(pk=i[0])
-
             return render(request, 'product/home.html',
                           {'products': products, 'category': category, 'all_products': all_products})
 
@@ -629,6 +645,8 @@ class SearchProduct(View):
             product_searched_not_available = products_name.filter(available_quantity=0)
             for product in product_searched_not_available:
                 SearchedNotify.objects.get_or_create(customer_name=request.user.customer, product_name=product)
+        custom_logger.error(f'Searching for {searched}')
+
 
         return render(request,
                       'product/search.html',

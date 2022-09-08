@@ -173,3 +173,106 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Kolkata'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# disable default django logging by
+# ----
+# LOGGING_CONFIG = None
+# - simply disable auto logging, this(logging) by default points to logging.config.dictConfig
+# import logging.config
+# logging.config.dictConfig( # pass the below LOGGING dict here as {})
+# ----
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        # name of formatter
+        'msg_formatter': {
+            # format : log level name,time, module, log message that generate the log message. (use style as well with this)
+            # 'format': '{levelname} {asctime} {module} {message}',
+            # 'style': '{',
+            'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
+            # format : time, name of logger, level, message (s = spaces)
+        }
+    },
+    'filters': {
+        'filter_debug_level': {
+            '()': 'product.logging.FilterLevels',
+            'filter_levels': ["DEBUG"],
+        },
+        'filter_info_level': {
+            '()': 'product.logging.FilterLevels',
+            'filter_levels': ["INFO"],
+        },
+        'filter_warn_level': {
+            '()': 'product.logging.FilterLevels',
+            'filter_levels': ["WARNING"],
+        },
+        'filter_error_level': {
+            '()': 'product.logging.FilterLevels',
+            'filter_levels': ["ERROR"],
+        },
+        'filter_critical_level': {
+            '()': 'product.logging.FilterLevels',
+            'filter_levels': ["CRITICAL"],
+        }
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'msg_formatter',
+        },
+        'warn_and_above': {
+            'formatter': 'msg_formatter',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR/'logs'/'warn_and_above.log',
+            'level': 'WARNING'
+        },
+        'info': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'info.log',
+            'formatter': 'msg_formatter',
+            'filters': ['filter_info_level']
+        },
+        'warn': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'warn.log',
+            'formatter': 'msg_formatter',
+            'filters': ['filter_warn_level']
+        },
+        'error': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'error.log',
+            'formatter': 'msg_formatter',
+            'filters': ['filter_error_level']
+        },
+        'critical': {
+            'level': 'CRITICAL',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'critical.log',
+            'formatter': 'msg_formatter',
+            'filters': ['filter_critical_level']
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['info', 'console'],
+            'level': 'INFO'
+        },
+        'custom_logger': {
+            'handlers': ['info', 'warn', 'error', 'critical'],
+            'level': 'INFO',
+        },
+        'warn_and_above_logger': {
+            'handlers': ['warn_and_above'],
+            'level': "WARNING",
+
+        }
+
+    },
+}
+# })
