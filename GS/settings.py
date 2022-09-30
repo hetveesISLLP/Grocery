@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY_VALUE')
+SECRET_KEY = load_dotenv()
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -34,6 +34,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -79,17 +80,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'GS.wsgi.application'
 
+ASGI_APPLICATION = 'GS.asgi.application'
+
+
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'HOST': os.environ.get('HOST_NAME'),
+    #     'PORT': os.environ.get('PORT_NO'),
+    #     'NAME': os.environ.get('NAME_DB'),
+    #     'PASSWORD': os.environ.get('PASS'),
+    #     'USER': os.environ.get('USER_NAME'),
+    # }
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'HOST': os.environ.get('HOST_NAME'),
-        'PORT': os.environ.get('PORT_NO'),
-        'NAME': os.environ.get('NAME_DB'),
-        'PASSWORD': os.environ.get('PASS'),
-        'USER': os.environ.get('USER_NAME'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -144,6 +152,15 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 MEDIA_URL = '/media/'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 LOGIN_REDIRECT_URL = 'grocery_store_home'
 

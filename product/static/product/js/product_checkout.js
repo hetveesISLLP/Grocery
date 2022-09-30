@@ -1,5 +1,5 @@
 // This is your tests publishable API key.
-const stripe = Stripe("pk_test_51LGcerSBrStSbNNxIuzNcLPukWCGD3MGt1nNgbenqtG9ms2pfgTaqZ9taZpRnEWnGhohTWpuPf4SChbx3nc7S1Yd00YML64BA2");
+const stripe = Stripe("pk_test_51LGcerSBrStSbNNxaLdxrIklb56b8FciEYwCqZugUgDBFoF0pnfkRgFUDyYt6gXBMawiYcoZiJPjjYjyMXPDT40k00mr6MFuq1");
 
 // The items the customer wants to buy
 const items = [{ id: "xl-tshirt" }];

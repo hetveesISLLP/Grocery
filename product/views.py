@@ -28,7 +28,7 @@ import logging
 logger = logging.getLogger('django')
 custom_logger = logging.getLogger('custom_logger')
 warn_and_above_logger = logging.getLogger('warn_and_above_logger')
-
+import os
 
 
 # stripe.api_key = 'sk_test_51LGcerSBrStSbNNxHd8IMfYJULu1SZ0QhBJViYUcKPOPRo7qr12w9wOH93rqhy00OZHd0P321jijOOOr4sMqhWq000VDho2bON'
@@ -161,7 +161,7 @@ class PaymentSuccessView(LoginRequiredMixin, UserIsCustomerMixin, View):
         if session_id is None:
             return HttpResponseNotFound()
 
-        stripe.api_key = settings.STRIPE_SECRET_KEY
+        stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
         session = stripe.checkout.Session.retrieve(session_id)
 
         prod_pk = int(request.GET.get('product'))
@@ -207,7 +207,7 @@ class CreateCheckoutSession(LoginRequiredMixin, UserIsCustomerMixin, View):
         if available_items >= float(quantity):
             items_left = available_items - float(quantity)
             number_purchased += float(quantity)
-            stripe.api_key = settings.STRIPE_SECRET_KEY
+            stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
             session = stripe.checkout.Session.create(
                 payment_method_types=['card'],
                 line_items=[{
@@ -229,7 +229,7 @@ class CreateCheckoutSession(LoginRequiredMixin, UserIsCustomerMixin, View):
             )
 
             Order.objects.create(customer=customer, stripe_payment_intent=session['payment_intent'], total_amount=0)
-            print(session.id)
+            # print(session.id)
             return JsonResponse({'sessionId': session.id})
         else:
             messages.error(request, f"{product.name} not available in that quantity")
@@ -241,7 +241,7 @@ class OrderDetailsView(LoginRequiredMixin, UserIsCustomerMixin, View):
 
     def get(self, request, pk):
         return render(request, 'product/buy_address.html',
-                      {'pk': pk, 'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY})
+                      {'pk': pk, 'stripe_publishable_key': os.environ.get('STRIPE_PUBLISHABLE_KEY')})
 
 
 # cant test for this
@@ -256,7 +256,7 @@ class PaymentSuccessViewCart(LoginRequiredMixin, UserIsCustomerMixin, View):
         if session_id is None:
             return HttpResponseNotFound()
 
-        stripe.api_key = settings.STRIPE_SECRET_KEY
+        stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
         '''retreives session id'''
         session = stripe.checkout.Session.retrieve(session_id)
 
@@ -328,7 +328,7 @@ class CreateCheckoutSessionCart(LoginRequiredMixin, UserIsCustomerMixin, View):
                     'quantity': cart_product.quantity
                 })
 
-            stripe.api_key = settings.STRIPE_SECRET_KEY
+            stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
             '''creating a checkout session with payment_method = card'''
             session = stripe.checkout.Session.create(
@@ -350,7 +350,7 @@ class OnlyAddress(LoginRequiredMixin, UserIsCustomerMixin, View):
     """To get the address"""
 
     def get(self, request):
-        return render(request, 'product/only_address.html', {'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY})
+        return render(request, 'product/only_address.html', {'stripe_publishable_key': os.environ.get('STRIPE_PUBLISHABLE_KEY')})
 
 
 class ViewCheckout(LoginRequiredMixin, UserIsCustomerMixin, TemplateView):

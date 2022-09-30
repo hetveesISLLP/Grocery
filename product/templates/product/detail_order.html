@@ -68,3 +68,6 @@
         </div>
     </div>
 </div>
+{{ order.id|json_script:"orderId" }}
+
+<script src = "{% static 'product/js/order_pk.js' %}"></script>
